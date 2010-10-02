@@ -1,0 +1,61 @@
+Kharon
+
+Kharon is a simple and lightweight Perl RPC library that provides
+tight integration with KNC as well as UNIX domain sockets and forked
+programs. It provides an OO model which can be conceptualised as
+remotely calling an object. It is mainly intended at the moment
+for relatively small client/server applications written to automate
+basic procedures. It is used as the basis of the OSKT Kerberos
+administrative tools krb5_admin and krb5_keytab.
+
+It provides:
+
+   1.  automatic failover,
+
+   2.  server side redirection,
+
+   3.  marshalling and unmarshalling of relatively complex Perl
+       data structures containing an arbitrarily nested list of
+       scalars, undef, array refs and hash refs, and
+
+   4.  exception propagation.
+
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+        perl Makefile.PL
+        make
+        make test
+        make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc Kharon
+
+LICENSE AND COPYRIGHT
+
+Copyright 2009  Morgan Stanley and Co. Incorporated
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject
+to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
