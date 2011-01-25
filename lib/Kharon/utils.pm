@@ -20,8 +20,6 @@ use Exporter;
 use IO::Handle;
 use Sys::Syslog;
 
-use Kharon::StdClient;
-
 use warnings;
 use strict;
 
@@ -37,11 +35,13 @@ sub generate_function {
 	my ($parent, $method, $cmd_call) = @_;
 	my $ret = '';
 
-	$ret .= "if (ref($parent"."->can('$method')) ne 'CODE') {\n";
-	$ret .= "	print STDERR '$method is not a method of";
-	$ret .= 	    " $parent in Kharon::utils\n';\n";
-	$ret .= "	exit 1;\n";
-	$ret .= "}\n\n";
+	if (defined($parent)) {
+		$ret .= "if (ref($parent"."->can('$method')) ne 'CODE') {\n";
+		$ret .= "	print STDERR '$method is not a method of";
+		$ret .= 	    " $parent in Kharon::utils\n';\n";
+		$ret .= "	exit 1;\n";
+		$ret .= "}\n\n";
+	}
 
 	$ret .= "sub $method {\n";
 	$ret .= '	my ($self, @args) = @_;' . "\n\n";
