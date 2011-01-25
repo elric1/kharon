@@ -1,5 +1,5 @@
-package Khaorn::Entitlement::Equals;
-use base qw(Khaorn::Entitlement);
+package Kharon::Entitlement::Equals;
+use base qw(Kharon::Entitlement);
 
 use strict;
 use warnings;
