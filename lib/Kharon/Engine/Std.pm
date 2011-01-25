@@ -50,11 +50,7 @@ sub Read {
 	my $self = shift;
 
 	# XXXrcd: check for errors.
-#	readline $self->{in};
-my $ret;
-my $out = sysread($self->{in}, $ret, 65536);
-# print STDERR "$out chars read: '$ret'\n";
-$ret;
+	readline $self->{in};
 }
 
 sub Write {
