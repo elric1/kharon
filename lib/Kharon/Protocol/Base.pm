@@ -58,13 +58,27 @@ sub setguts {
 }
 
 sub append {
-	my ($self, @lines) = @_;
+	my ($self, @input) = @_;
 
-	for my $line (@lines) {
+	my $str  = '';
+	   $str  = $self->{REMAINDER} if defined($self->{REMAINDER});
+	   $str .= join('', @input);
+
+	$self->{REMAINDER} = $str;
+
+	while (1) {
+		$str = $self->{REMAINDER};
+
 		my ($code, $dotdash, $result) =
-		 ($line =~ /^([0-9][0-9][0-9]) *([-.]) *([^\r\n]*)(\r\n|\n)$/o);
+	      ($str =~ /^([0-9][0-9][0-9]) *([-.]) *([^\r\n]*)(\r\n|\n)/po);
 
-		return undef			    if !defined($1);
+		if (!defined($code)) {
+			return undef	if $str =~ /\n/;
+			return 1;
+		}
+
+		$self->{REMAINDER} = ${^POSTMATCH};
+
 		die "Continued after end in append" if $self->{more} == 0;
 
 		# XXXrcd: we should deal with inconsistent CODEs in some
@@ -85,6 +99,8 @@ sub append {
 			$self->{more} = 0;
 			last;
 		}
+
+		last if ($str eq '');
 	}
 
 	$self->{more};

@@ -47,10 +47,13 @@ sub Disconnect {
 }
 
 sub Read {
-	my $self = shift;
+	my ($self) = @_;
+	my $buf;
 
-	# XXXrcd: check for errors.
-	readline $self->{in};
+	my $ret = sysread($self->{in}, $buf, 32768);
+
+	return undef if !defined($ret) || $ret == 0;
+	return $buf;
 }
 
 sub Write {

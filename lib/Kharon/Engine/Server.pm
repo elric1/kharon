@@ -168,12 +168,19 @@ sub Run {
 
 	my @reflist;
 
+	my $remainder = '';
 	while (!$last) {
 		# Retrieve a line from the client
-		$line = $self->Read();
-		if (!defined($line)) {
-			last;
-		}
+		my $in = $self->Read();
+		last if !defined($in);
+
+		$remainder .= $in;
+
+		($line) = ($remainder =~ /^([^\n\r]*(\r\n|\n))/);
+
+		next if !defined($line);
+
+		$remainder = ${^POSTMATCH};
 
 		try {
 			$last = $self->do_command($handlers, $line);
