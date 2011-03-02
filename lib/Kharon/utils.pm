@@ -471,7 +471,7 @@ sub tokenise {
 			unshift(@$string, $char);
 		}
 	}
-	@ret;
+	return \@ret;
 }
 
 my $logger_SessionID = 0;

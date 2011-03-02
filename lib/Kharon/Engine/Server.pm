@@ -64,7 +64,8 @@ sub do_command {
 
 	# Get the command and args
 	eval {
-		($cmd, @args) = $self->{resp}->Unmarshall($line);
+		my $ret = $self->{resp}->Unmarshall($line);
+		($cmd, @args) = @$ret;
 	};
 	if ($@) {
 		$log->log('err', "Error parsing command: $@");

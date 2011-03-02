@@ -61,7 +61,8 @@ sub Connect {
 		my ($code, $banner);
 		if (defined($oldproto)) {
 			$proto->setguts($oldproto->getguts());
-			($code, $banner) = $proto->Parse();
+			($code, my $ret) = $proto->Parse();
+			($banner) = @$ret;
 		} else {
 			($code, $banner) = $self->CommandResult();
 		}
@@ -130,7 +131,8 @@ sub CommandResult {
 						  "[" . $str . "]", 500);
 		}
 
-		($code, @response) = $self->{resp}->Parse();
+		($code, my $ret) = $self->{resp}->Parse();
+		@response = @$ret;
 	} catch Kharon::KharonError with {
 		shift->chain("Error reading command response")->throw;
 	};
