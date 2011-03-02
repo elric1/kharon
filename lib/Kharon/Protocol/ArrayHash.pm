@@ -6,8 +6,6 @@ package Kharon::Protocol::ArrayHash;
 use base qw(Kharon::Protocol::Base);
 use Exporter;
 
-# use Parse::Parse;
-
 use Time::HiRes qw(gettimeofday tv_interval);
 
 use Kharon::utils qw{encode_var tokenise};
@@ -21,8 +19,6 @@ sub new {
 	my %hash = @args;
 
 	my $self = $class->SUPER::new(@args);
-
-#	$self->{parse} = Parse::new();
 
 	bless($self, $class);
 	return $self;
@@ -42,48 +38,9 @@ sub bannerMatches {
 	0;
 }
 
-#sub Reset {
-#	my ($self) = @_;
-#
-#	$self->{more} = 1;
-#	$self->{RESULTS} = [];
-##	$self->{parse} = Parse::new();
-#}
-
-#sub append {
-#	my ($self, @lines) = @_;
-#
-## XXXrcd: hackery!
-#
-#	for my $line (@lines) {
-#		my $ret = $self->{parse}->parse($line);
-#
-## print STDERR "Parsing line '$line'\n";
-#		if (ref($ret) eq 'ARRAY') {
-## print STDERR "Setting result set $ret, length = " . scalar(@$ret) . "\n";
-#			$self->{RESULTS} = $ret;
-#			$self->{more} = 0;
-#		}
-#	}
-#
-#	$self->{more};
-#}
-
 sub Parse {
 	my ($self) = @_;
 	my ($code, @plist) = $self->SUPER::Parse();
-#	my $parser = Parse::new();
-
-#	my $ret;
-#	for my $i (@plist) {
-#		$ret = $parser->parse($i);
-#	}
-#	return ($code, $ret);
-
-#	return (200, @{$self->{RESULTS}});
-
-#        return ($code, @{Parse::tokenise(join(' ', @plist) . "\r\n")});
-#        return ($code, @{Parse::tokenise2(join(' ', @plist) . "\r\n")});
 
 	($code, tokenise([shift(@plist), map {" $_"} @plist]));
 }
@@ -97,7 +54,6 @@ sub Parse {
 sub Encode {
 	my ($self, $code, @vars) = @_;
 
-#	return $self->SUPER::Encode($code, map {Parse::encode_var($_)} @vars);
 	$self->SUPER::Encode($code, map {encode_var($_, '[ ]', 'OUTER')} @vars);
 }
 
@@ -123,7 +79,6 @@ sub Marshall {
 
 # XXXrcd: check to ensure that first element of $cmd is a scalar.
 
-#	my $str = join(' ', map {Parse::encode_var($_)} @$cmd);
 	my $str = join(' ', map {encode_var($_, '[ ]', 'OUTER')} @$cmd);
 	$self->SUPER::Marshall($str);
 }
@@ -131,7 +86,6 @@ sub Marshall {
 sub Unmarshall {
 	my ($self, $line) = @_;
 
-#	Parse::tokenise($line . "\r\n");
 	tokenise([$line]);
 }
 
