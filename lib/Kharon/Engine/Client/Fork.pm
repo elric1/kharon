@@ -56,7 +56,9 @@ sub Connect {
 
 	$kid_sock->close();
 	$self->{in}  = $self->{out} = $parent_sock;
-	$self->SUPER::Connect();
+	if ($self->SUPER::Connect() == 0) {
+		die "Connect failed!";
+	}
 	return ($kid);
 }
 
