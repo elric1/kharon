@@ -1,6 +1,6 @@
 package Kharon::Protocol::ArrayHash;
 
-use 5.012002;
+# use 5.012002;
 use strict;
 use warnings;
 use Carp;
