@@ -2,7 +2,7 @@
 # Protocol class capable of parsing nested perl data structures including
 # list refs, hash refs, scalars and undef.
 
-package Kharon::Protocol::ArrayHash;
+package Kharon::Protocol::ArrayHashPerl;
 use base qw(Kharon::Protocol::Base);
 use Exporter;
 

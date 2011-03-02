@@ -3,6 +3,7 @@ package Kharon::Test::Protocols;
 use Carp;
 
 use Kharon::Protocol::ArrayHash;
+use Kharon::Protocol::ArrayHashPerl;
 
 use Kharon::Test::utils qw/compare compare_array compare_hash/;
 
@@ -192,7 +193,8 @@ MARSHALL:
 }
 
 sub run_test {
-	my @protos = qw/Kharon::Protocol::ArrayHash/;
+	my @protos = qw/Kharon::Protocol::ArrayHash
+			Kharon::Protocol::ArrayHashPerl/;
 
 	print "Testing Kharon::Protocols:\n";
 

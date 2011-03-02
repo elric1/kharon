@@ -110,7 +110,8 @@ sub produce_table {
 
 sub run_test {
 
-	produce_table(Kharon::Protocol::ArrayHash->new());
+	produce_table(Kharon::Protocol::ArrayHash->new(),
+		      Kharon::Protocol::ArrayHashPerl->new());
 }
 
 1;

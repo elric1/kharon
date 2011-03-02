@@ -11,6 +11,7 @@ WriteMakefile(
       ? ('LICENSE'=> 'perl')
       : ()),
     PL_FILES            => {},
+    DIR => ['ArrayHash'],
 #    PREREQ_PM => {
 #        'Test::More' => 0,
 #    },
