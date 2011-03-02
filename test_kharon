@@ -1,0 +1,21 @@
+#!/usr/pkg/bin/perl
+
+use lib 'blib/lib';
+use lib 'blib/arch';
+
+use Kharon::utils qw/encode_var/;
+
+use Kharon::Test::Entitlements;
+use Kharon::Test::Parsing;
+use Kharon::Test::ParseSpeed;
+use Kharon::Test::Protocols;
+use Kharon::Test::ForkClientServer;
+
+eval {
+	Kharon::Test::ParseSpeed::run_test();
+	Kharon::Test::ForkClientServer::run_test();
+	Kharon::Test::Protocols::run_test();
+	Kharon::Test::Entitlements::run_test();
+};
+
+if ($@) { print encode_var($@) };
