@@ -152,8 +152,8 @@ sub encode_var {
 	return $map{BANG}		if !defined($var);
 	return encode_hash($var)	if ref($var) eq 'HASH';
 	return encode_array($var)	if ref($var) eq 'ARRAY';
-	return '&' . "$var"		if ref($var) eq 'CODE';
-	return '&' . "$var"		if UNIVERSAL::isa($var, 'UNIVERSAL');
+#	return '&' . "$var"		if ref($var) eq 'CODE';
+#	return '&' . "$var"		if UNIVERSAL::isa($var, 'UNIVERSAL');
 
 	return '\z' if $var eq '' && defined($ctx2) && $ctx2 eq 'OUTER';
 
@@ -357,7 +357,7 @@ sub get_next_var {
 	return ([], $str)			if $char eq 'EMPTYLIST';
 	return get_next_array($str)		if $char eq 'LEFTBRACKET';
 	return get_next_hash($str)		if $char eq 'LEFTBRACE';
-	return get_next_func($str, $delim)	if $char eq 'AND';
+#	return get_next_func($str, $delim)	if $char eq 'AND';
 
 	$char = $token_map{$char} if exists($token_map{$char});
 	unshift(@$str, $char);
