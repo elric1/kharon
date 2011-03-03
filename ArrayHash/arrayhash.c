@@ -35,11 +35,36 @@ struct enc_entry {
 	int			 state;
 	int			 first;
 	int			 pos;
-	void			*data;
+	union enc_entry_union {
+		void		*data;
+		char		 c;
+	} u;
 	struct encode_state	*prev;
 };
 
 ST_DECLARE(struct encode_state, struct enc_entry);
+
+struct encode_state *marshall_init(void *);
+struct encode_state *encode_init(void *, int);
+int encode(struct encode_state **, char *, int);
+void encode_free(struct encode_state **);
+int parse_append(struct self *, char *, int);
+void parse_reset(struct self *);
+int unmarshall(struct self *, char *, int);
+
+void encode_push(struct encode_state **, int, void *);
+void encode_push_c(struct encode_state **, int, char);
+void encode_pop(struct encode_state **);
+void encode_undef(struct encode_state **, char *, int *, int);
+void encode_list(struct encode_state **, char *, int *, int);
+void encode_map(struct encode_state **, char *, int *, int);
+void encode_char(struct encode_state **, char *, int *, int);
+void encode_var(struct encode_state **, char *, int *, int);
+void encode_scalar(struct encode_state **, char *, int *, int);
+
+int parse(struct self *);
+void state_done(struct parse *, struct stack **, int);
+const char * char_from(int);
 
 void
 encode_push(struct encode_state **st, int state, void *data)
@@ -50,7 +75,19 @@ encode_push(struct encode_state **st, int state, void *data)
 	ST_ENTRY(st).state  = state;
 	ST_ENTRY(st).first  = 1;
 	ST_ENTRY(st).pos    = 0;
-	ST_ENTRY(st).data   = data;
+	ST_ENTRY(st).u.data = data;
+}
+
+void
+encode_push_c(struct encode_state **st, int state, char c)
+{
+
+	D(fprintf(stderr, "encode_push, enter\n"));
+	ST_PUSH(st);
+	ST_ENTRY(st).state  = state;
+	ST_ENTRY(st).first  = 1;
+	ST_ENTRY(st).pos    = 0;
+	ST_ENTRY(st).u.c    = c;
 }
 
 void
@@ -81,20 +118,20 @@ encode_list(struct encode_state **st, char *ret, int *pos, int len)
 	if (ST_ENTRY(st).first) {
 		if ((ST_ENTRY(st).state & STATE_BITMASK) != STATE_SPLIST)
 			ret[(*pos)++] = '[';
-		ST_ENTRY(st).data = encode_list_iter(ST_ENTRY(st).data);
+		ST_ENTRY(st).u.data = encode_list_iter(ST_ENTRY(st).u.data);
 
-		if (!ST_ENTRY(st).data) {
+		if (!ST_ENTRY(st).u.data) {
 			/* XXXrcd: failure! */
 		}
 	}
 
-	tmp = encode_list_next(ST_ENTRY(st).data);
+	tmp = encode_list_next(ST_ENTRY(st).u.data);
 
 	if (!tmp) {
-		encode_list_free(ST_ENTRY(st).data);
+		encode_list_free(ST_ENTRY(st).u.data);
 		if ((ST_ENTRY(st).state & STATE_BITMASK) != STATE_SPLIST) {
-			ST_ENTRY(st).state = STATE_CHAR;
-			ST_ENTRY(st).data  = (void *) ']';
+			ST_ENTRY(st).state  = STATE_CHAR;
+			ST_ENTRY(st).u.data = (void *) ']';
 		} else {
 			/* XXXrcd: suspect logic: */
 			encode_pop(st);
@@ -129,20 +166,20 @@ encode_map(struct encode_state **st, char *ret, int *pos, int len)
 	if (first) {
 		ret[(*pos)++] = '{';
 		ST_ENTRY(st).first = 0;
-		ST_ENTRY(st).data = encode_map_iter(ST_ENTRY(st).data);
+		ST_ENTRY(st).u.data = encode_map_iter(ST_ENTRY(st).u.data);
 	}
 
-	if (!encode_map_next(ST_ENTRY(st).data, &key, &val)) {
+	if (!encode_map_next(ST_ENTRY(st).u.data, &key, &val)) {
 		ST_ENTRY(st).state = STATE_CHAR;
-		ST_ENTRY(st).data  = (void *) '}';
+		ST_ENTRY(st).u.c   = '}';
 		return;
 	}
 
 	encode_push(st, STATE_VAR|CTX_COMMA|CTX_RIGHTBRACE|CTX_EQUALS, val);
-	encode_push(st, STATE_CHAR, '=');
+	encode_push(st, STATE_CHAR, (void *) '=');
 	encode_push(st, STATE_SCALAR|CTX_COMMA|CTX_RIGHTBRACE|CTX_EQUALS, key);
 	if (!first)
-		encode_push(st, STATE_CHAR, ',');
+		encode_push_c(st, STATE_CHAR, ',');
 
 }
 
@@ -151,7 +188,7 @@ encode_char(struct encode_state **st, char *ret, int *pos, int len)
 {
 
 	D(fprintf(stderr, "encode_char, enter\n"));
-	ret[(*pos)++] = (char) ST_ENTRY(st).data;
+	ret[(*pos)++] = (char) ST_ENTRY(st).u.c;
 	encode_pop(st);
 }
 
@@ -161,7 +198,7 @@ encode_var(struct encode_state **st, char *ret, int *pos, int len)
 
 	D(fprintf(stderr, "encode_var, enter\n"));
 	ST_ENTRY(st).state &= ~STATE_BITMASK;
-	ST_ENTRY(st).state |= encode_get_type(ST_ENTRY(st).data);
+	ST_ENTRY(st).state |= encode_get_type(ST_ENTRY(st).u.data);
 }
 
 void
@@ -169,31 +206,31 @@ encode_scalar(struct encode_state **st, char *ret, int *pos, int len)
 {
 	unsigned char	*str;
 	int		 ctx;
-	int		 strlen;
+	int		 str_len;
 	int		 i;
 	int		 intercharpos;
 
 	D(fprintf(stderr, "encode_scalar, enter\n"));
-	str = encode_get_scalar(ST_ENTRY(st).data, &strlen);
+	str = (unsigned char *)encode_get_scalar(ST_ENTRY(st).u.data, &str_len);
 
-	if (strlen == 0) {
+	if (str_len == 0) {
 		ret[(*pos)++] = '\\';
 		ST_ENTRY(st).state = STATE_CHAR;
-		ST_ENTRY(st).data  = (void *) 'z';
+		ST_ENTRY(st).u.c   = 'z';
 		return;
 	}
 
 	ctx = ST_ENTRY(st).state & STATE_CTXMASK;
 	ctx |= CTX_BACKSLASH;
 
-	for (i=ST_ENTRY(st).pos; i < strlen && (*pos) < len; ) {
+	for (i=ST_ENTRY(st).pos; i < str_len && (*pos) < len; ) {
 		int	tmpctx = ctx;
 		int	ctxptr = 0;
 		int	quote  = 0;
 		char	tmpchar;
 
 		D(fprintf(stderr, "encode_scalar, enter: pos=%d len=%d\n",
-		    i, strlen));
+		    i, str_len));
 
 		intercharpos = STATE_REMAINS & ST_ENTRY(st).state;
 
@@ -255,7 +292,7 @@ encode_scalar(struct encode_state **st, char *ret, int *pos, int len)
 	}
 
 	ST_ENTRY(st).pos = i;
-	if (i >= strlen)
+	if (i >= str_len)
 		encode_pop(st);
 }
 
@@ -385,7 +422,6 @@ stack_add_ctx(struct stack **st, int ctx)
 static inline void
 push(struct stack **st)
 {
-	struct stack	*new;
 
 	D(fprintf(stderr, "pushing...\n"));
 	ST_PUSH(st);
@@ -397,7 +433,6 @@ push(struct stack **st)
 static inline void
 pop(struct stack **st)
 {
-	struct stack	*tmp;
 
 	D(fprintf(stderr, "popping(%p) = ", *st));
 	ST_POP(st);
@@ -667,7 +702,7 @@ state_scalar(struct parse *p, struct stack **st, int c)
 
 	/* Now for the meat of the function. */
 
-	for (i=0; i < sizeof(buf); i++) {
+	for (i=0; i < (int) sizeof(buf); i++) {
 		if (chr_matches_ctx(st, c) || c == EOL) {
 			break;
 		}
@@ -694,7 +729,6 @@ state_scalar(struct parse *p, struct stack **st, int c)
 void
 state_done(struct parse *p, struct stack **st, int c)
 {
-	struct parse	  pars;
 	ssp_val		 *ret;
 	ssp_val		 *key;
 	ssp_val		 *val;
@@ -820,7 +854,7 @@ state_done(struct parse *p, struct stack **st, int c)
 
 /* XXXrcd: L4M3 global but only for debugging */
 char char_from_buf[2];
-char *
+const char *
 char_from(int c)
 {
 
@@ -898,7 +932,6 @@ parse_free(struct self *self)
 int
 parse_append(struct self *self, char *input, int len)
 {
-	struct parse	  pars;
 	struct parse	 *p;
 	struct stack	**st;
 
@@ -934,15 +967,8 @@ parse_append(struct self *self, char *input, int len)
 int
 unmarshall(struct self *self, char *input, int len)
 {
-	struct parse	  pars;
 	struct parse	 *p;
 	struct stack	**st;
-	ssp_val		 *ret;
-	ssp_val		 *key;
-	ssp_val		 *val;
-	ssp_val		  tmp;
-	int		  state;
-	int		  c;
 
 	/* XXXrcd: LAME, rewrite */
 
@@ -977,13 +1003,9 @@ D(fprintf(stderr, "unmarshalling: '%s'\n", input));
 int
 parse(struct self *self)
 {
-	struct parse	  pars;
 	struct parse	 *p;
 	struct stack	**st;
 	ssp_val		 *ret;
-	ssp_val		 *key;
-	ssp_val		 *val;
-	ssp_val		  tmp;
 	int		  state;
 	int		  c;
 

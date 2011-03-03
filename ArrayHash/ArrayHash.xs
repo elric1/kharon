@@ -39,7 +39,10 @@ new(class, ...)
 	char		*key;
 	STRLEN		 len;
  CODE:
-        self = parse_init();
+	if (!class) /* XXXrcd: for -Wall must use class */
+		croak("NULL passed in.");
+
+	self = parse_init();
 	for (i=0; i*2+1 < items; i++) {
 		key = SvPV(ST(1+i*2), len);
 		if (len != strlen("banner"))
@@ -77,7 +80,10 @@ ArrayHash_bannerMatches(self, banner)
 	SV		*banner
  CODE:
 	/* XXXrcd: hmmm, do a comparison? */
-	RETVAL = 1;
+	if (banner)
+		RETVAL = 1;
+	else
+		RETVAL = 0;
  OUTPUT:
 	RETVAL
 
@@ -110,7 +116,7 @@ ArrayHash_Encode(self, code, ...)
  INIT:
         char			 buf[8192];
 	int			 i;
-	int			 len;
+	size_t			 len;
 	struct encode_state	*st;
 	SV			*ret;
  CODE:
@@ -127,7 +133,7 @@ ArrayHash_Encode(self, code, ...)
 			if (len < sizeof(buf))
 				break;
 		}
-		snprintf(buf, sizeof(buf), "\r\n", code);
+		snprintf(buf, sizeof(buf), "\r\n");
 		sv_catpvn(ret, buf, (STRLEN) strlen(buf));
 	}
         RETVAL = ret;
@@ -141,8 +147,8 @@ ArrayHash_Marshall(self, cmd)
  INIT:
 	struct encode_state	*st;
         char			 buf[8192];
-	int			 len;
-	SV	*ret;
+	size_t			 len;
+	SV			*ret;
  CODE:
 	ret = newSVpvn(buf, 0);
 	st = marshall_init(cmd);
@@ -161,16 +167,17 @@ SV *
 ArrayHash_Unmarshall(self, line)
 	ArrayHash	*self
 	char		*line
- PPCODE:
+ CODE:
 	/* XXXrcd: line should not be a char... */
 	unmarshall(self, line, strlen(line));
 	if (!self->done)
 		croak("Parsing is not complete");
 	if (!self->results)
 		croak("No results are available, yet");
-	EXTEND(SP, 1);
-	PUSHs(sv_2mortal(*self->results));
+	RETVAL = *self->results;
 	*self->results = NULL;
+ OUTPUT:
+	RETVAL
 
 SV *
 ArrayHash_Parse(self)
@@ -189,4 +196,5 @@ ArrayHash_Parse(self)
 	PUSHs(sv_2mortal(newSViv(self->code)));
 	PUSHs(sv_2mortal(*self->results));
 	*self->results = NULL;
+	RETVAL = NULL;	/* make -Wall quiet */
 

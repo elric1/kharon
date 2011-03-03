@@ -229,9 +229,9 @@ map_element(ssp_val *ret, ssp_val *key, ssp_val *val)
 {
 
 	if (!val)
-		hv_store_ent((HV *)*ret, (SV *)*key, newSV(0), 0);
+		(void) hv_store_ent((HV *)*ret, (SV *)*key, newSV(0), 0);
 	else
-		hv_store_ent((HV *)*ret, (SV *)*key, (SV *)*val, 0);
+		(void) hv_store_ent((HV *)*ret, (SV *)*key, (SV *)*val, 0);
 
 	D(fprintf(stderr, "map_element(%p, %p, %p)\n", *ret, *key,
 	    val?*val:0));
