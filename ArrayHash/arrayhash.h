@@ -1,7 +1,14 @@
 /* $Id$ */
 
-#ifndef KHARON_PARSE_INCLUDE
-#define KHARON_PARSE_INCLUDE
+#ifndef KHARON_ARRAYHASH_INCLUDE
+#define KHARON_ARRAYHASH_INCLUDE
+
+// #define DEBUG 1
+#if DEBUG
+#define D(x)	do { if (DEBUG) x; } while (0)
+#else
+#define D(x)
+#endif
 
 typedef void *ssp_val;
 
@@ -135,12 +142,14 @@ static int	 get_next_var(struct parse **, ssp_val *, int);
  * The Perl parse callbacks...
  */
 
+#if 0
 static void	list_begin(ssp_val *);
 static void	list_element(ssp_val *, ssp_val *);
 static void	list_end(ssp_val *);
 static void	map_begin(ssp_val *);
 static void	map_element(ssp_val *, ssp_val *, ssp_val *);
 static void	map_end(ssp_val *);
+#endif
 
 
 struct encode_state	*encode_init(void *, int);

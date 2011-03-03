@@ -4,7 +4,9 @@
 
 #include <stdio.h>
 
-#include "parse.h"
+#include "arrayhash.h"
+#include "arrayhash_perl.c"
+#include "arrayhash.c"
 
 typedef struct self ArrayHash;
 

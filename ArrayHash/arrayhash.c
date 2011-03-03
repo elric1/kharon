@@ -1,12 +1,5 @@
 /* $Id: utils.pm,v 1.22 2009/10/27 15:23:32 dowdes Exp $ */
 
-// #define DEBUG 1
-#if DEBUG
-#define D(x)	do { if (DEBUG) x; } while (0)
-#else
-#define D(x)
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -17,129 +10,306 @@
 #include <string.h>
 #include <unistd.h>
 
-#define USE_PERL5
-
-#ifdef USE_PERL5
-#include "EXTERN.h"
-#include "perl.h"
-#include "XSUB.h"
-#endif
-
-#include "parse.h"
+#include "arrayhash.h"
 
 #define STR_BUF_LEN	1
 
-static inline void
-string_begin(ssp_val *ret)
+struct {
+	int	val;
+	char	chr;
+} context[] = {
+	{ CTX_LEFTBRACE,	'{' },
+	{ CTX_RIGHTBRACE,	'}' },
+	{ CTX_LEFTBRACKET,	'[' },
+	{ CTX_RIGHTBRACKET,	']' },
+	{ CTX_COMMA,		',' },
+	{ CTX_EQUALS,		'=' },
+	{ CTX_BANG,		'!' },
+	{ CTX_AND,		'&' },
+	{ CTX_SPACE,		' ' },
+	{ CTX_BACKSLASH,	'\\' },
+	{ 0, 0 }
+};
+
+struct enc_entry {
+	int			 state;
+	int			 first;
+	int			 pos;
+	void			*data;
+	struct encode_state	*prev;
+};
+
+ST_DECLARE(struct encode_state, struct enc_entry);
+
+void
+encode_push(struct encode_state **st, int state, void *data)
 {
 
-	*ret = NULL;
-	D(fprintf(stderr, "string_begin(%p)\n", *ret));
+	D(fprintf(stderr, "encode_push, enter\n"));
+	ST_PUSH(st);
+	ST_ENTRY(st).state  = state;
+	ST_ENTRY(st).first  = 1;
+	ST_ENTRY(st).pos    = 0;
+	ST_ENTRY(st).data   = data;
 }
 
-static inline void
-string_append(ssp_val *ret, char *str, int len)
+void
+encode_pop(struct encode_state **st)
 {
 
-	if (!*ret) {
-		*ret = newSVpvn(str, len);
-		D(fprintf(stderr, "string_append(%p): '%s', %d\n", *ret,
-		    str, len));
+	D(fprintf(stderr, "encode_pop, enter\n"));
+	ST_POP(st);
+}
+
+void
+encode_undef(struct encode_state **st, char *ret, int *pos, int len)
+{
+
+	D(fprintf(stderr, "encode_undef, enter\n"));
+	ret[(*pos)++] = '!';
+	encode_pop(st);
+}
+
+void
+encode_list(struct encode_state **st, char *ret, int *pos, int len)
+{
+	void	*tmp;
+	int	 ctx;
+
+	D(fprintf(stderr, "encode_list, enter state = 0x%x\n",
+	    ST_ENTRY(st).state));
+	if (ST_ENTRY(st).first) {
+		if ((ST_ENTRY(st).state & STATE_BITMASK) != STATE_SPLIST)
+			ret[(*pos)++] = '[';
+		ST_ENTRY(st).data = encode_list_iter(ST_ENTRY(st).data);
+
+		if (!ST_ENTRY(st).data) {
+			/* XXXrcd: failure! */
+		}
+	}
+
+	tmp = encode_list_next(ST_ENTRY(st).data);
+
+	if (!tmp) {
+		encode_list_free(ST_ENTRY(st).data);
+		if ((ST_ENTRY(st).state & STATE_BITMASK) != STATE_SPLIST) {
+			ST_ENTRY(st).state = STATE_CHAR;
+			ST_ENTRY(st).data  = (void *) ']';
+		} else {
+			/* XXXrcd: suspect logic: */
+			encode_pop(st);
+		}
 		return;
 	}
 
-	sv_catpvn(*ret, str, len);
-	D(fprintf(stderr, "string_append(%p): '%s', %d\n", *ret,
-	    str, len));
-}
-
-static inline void
-string_end(ssp_val *ret)
-{
-	char buf[] = "";
-
-	if (!*ret) {
-		*ret = newSVpvn(buf, 0);
+	if (!ST_ENTRY(st).first) {
+		if ((ST_ENTRY(st).state & STATE_BITMASK) != STATE_SPLIST)
+			ret[(*pos)++] = ',';
+		else
+			ret[(*pos)++] = ' ';
 	}
 
-	D(fprintf(stderr, "string_end(%p)\n", *ret));
-}
-
-#define string_free(x)	kharon_perl_free(x)
-#define list_free(x)	kharon_perl_free(x)
-#define map_free(x)	kharon_perl_free(x)
-
-static inline void
-kharon_perl_free(ssp_val *ret)
-{
-
-	D(fprintf(stderr, "decrementing ref count on %p\n", *ret));
-	SvREFCNT_dec(*ret);
-}
-
-static inline void
-undef_begin(ssp_val *ret)
-{
-
-	*ret = newSV(0);
-	D(fprintf(stderr, "undef_begin(%p):\n", *ret));
-}
-
-static inline void
-list_begin(ssp_val *ret)
-{
-
-	*ret = newAV();
-	D(fprintf(stderr, "list_begin(%p)\n", *ret));
-}
-
-static inline void
-list_element(ssp_val *ret, ssp_val *elem)
-{
-
-	av_push(*ret, *elem);
-	D(fprintf(stderr, "list_element(%p, %p)\n", *ret, *elem));
-}
-
-static inline void
-list_end(ssp_val *ret)
-{
-
-	D(fprintf(stderr, "list_end(%p) = ", *ret));
-	*ret = newRV_noinc(*ret);
-	D(fprintf(stderr, "%p\n", *ret));
-}
-
-static inline void
-map_begin(ssp_val *ret)
-{
-
-	*ret = newHV();
-	D(fprintf(stderr, "map_begin(%p)\n", *ret));
-}
-
-static inline void
-map_element(ssp_val *ret, ssp_val *key, ssp_val *val)
-{
-
-	if (!val)
-		hv_store_ent((HV *)*ret, (SV *)*key, newSV(0), 0);
+	if ((ST_ENTRY(st).state & STATE_BITMASK) == STATE_SPLIST)
+		ctx = CTX_SPACE;
 	else
-		hv_store_ent((HV *)*ret, (SV *)*key, (SV *)*val, 0);
+		ctx = CTX_COMMA;
 
-	D(fprintf(stderr, "map_element(%p, %p, %p)\n", *ret, *key,
-	    val?*val:0));
+	ST_ENTRY(st).first = 0;
+	encode_push(st, STATE_VAR | ctx|CTX_RIGHTBRACKET, tmp);
 }
 
-static inline void
-map_end(ssp_val *ret)
+void
+encode_map(struct encode_state **st, char *ret, int *pos, int len)
+{
+	void	*key;
+	void	*val;
+	int	 first = ST_ENTRY(st).first;
+
+	D(fprintf(stderr, "encode_map, enter\n"));
+	if (first) {
+		ret[(*pos)++] = '{';
+		ST_ENTRY(st).first = 0;
+		ST_ENTRY(st).data = encode_map_iter(ST_ENTRY(st).data);
+	}
+
+	if (!encode_map_next(ST_ENTRY(st).data, &key, &val)) {
+		ST_ENTRY(st).state = STATE_CHAR;
+		ST_ENTRY(st).data  = (void *) '}';
+		return;
+	}
+
+	encode_push(st, STATE_VAR|CTX_COMMA|CTX_RIGHTBRACE|CTX_EQUALS, val);
+	encode_push(st, STATE_CHAR, '=');
+	encode_push(st, STATE_SCALAR|CTX_COMMA|CTX_RIGHTBRACE|CTX_EQUALS, key);
+	if (!first)
+		encode_push(st, STATE_CHAR, ',');
+
+}
+
+void
+encode_char(struct encode_state **st, char *ret, int *pos, int len)
 {
 
-	D(fprintf(stderr, "map_end(%p) = ", *ret));
-	*ret = newRV_noinc(*ret);
-	D(fprintf(stderr, "%p\n", *ret));
+	D(fprintf(stderr, "encode_char, enter\n"));
+	ret[(*pos)++] = (char) ST_ENTRY(st).data;
+	encode_pop(st);
 }
 
+void
+encode_var(struct encode_state **st, char *ret, int *pos, int len)
+{
+
+	D(fprintf(stderr, "encode_var, enter\n"));
+	ST_ENTRY(st).state &= ~STATE_BITMASK;
+	ST_ENTRY(st).state |= encode_get_type(ST_ENTRY(st).data);
+}
+
+void
+encode_scalar(struct encode_state **st, char *ret, int *pos, int len)
+{
+	unsigned char	*str;
+	int		 ctx;
+	int		 strlen;
+	int		 i;
+	int		 intercharpos;
+
+	D(fprintf(stderr, "encode_scalar, enter\n"));
+	str = encode_get_scalar(ST_ENTRY(st).data, &strlen);
+
+	if (strlen == 0) {
+		ret[(*pos)++] = '\\';
+		ST_ENTRY(st).state = STATE_CHAR;
+		ST_ENTRY(st).data  = (void *) 'z';
+		return;
+	}
+
+	ctx = ST_ENTRY(st).state & STATE_CTXMASK;
+	ctx |= CTX_BACKSLASH;
+
+	for (i=ST_ENTRY(st).pos; i < strlen && (*pos) < len; ) {
+		int	tmpctx = ctx;
+		int	ctxptr = 0;
+		int	quote  = 0;
+		char	tmpchar;
+
+		D(fprintf(stderr, "encode_scalar, enter: pos=%d len=%d\n",
+		    i, strlen));
+
+		intercharpos = STATE_REMAINS & ST_ENTRY(st).state;
+
+		if (ST_ENTRY(st).first) {
+			tmpctx |= 0xffff;
+			ST_ENTRY(st).first = 0;
+		}
+
+		if (str[i] < 32 || str[i] > 126) {
+			switch (intercharpos) {
+			case 0:
+				tmpchar = '\\';
+				intercharpos++;
+				break;
+			case 1:
+				tmpchar = '0' + (str[i] >> 4);
+				intercharpos++;
+				break;
+			case 2:
+				tmpchar = '0' + (str[i] & 0x0f);
+				intercharpos = 0;
+				i++;
+				break;
+			}
+
+			if (tmpchar != '\\' && tmpchar > '9')
+				tmpchar += 'a' - '9' - 1;
+
+			ret[(*pos)++] = tmpchar;
+			ST_ENTRY(st).state &= ~STATE_REMAINS;
+			ST_ENTRY(st).state |= intercharpos;
+			continue;
+		}
+
+		if (intercharpos) {
+			ret[(*pos)++] = str[i++];
+			ST_ENTRY(st).state &= ~STATE_REMAINS;
+			continue;
+		}
+
+		for (ctxptr=0; tmpctx && context[ctxptr].val; ctxptr++) {
+			if (tmpctx & context[ctxptr].val) {
+				if (str[i] == context[ctxptr].chr) {
+					tmpctx = 0;
+					quote = 1;
+				} else {
+					tmpctx &= ~context[ctxptr].val;
+				}
+			}
+		}
+
+		if (quote) {
+			ret[(*pos)++] = '\\';
+			ST_ENTRY(st).state &= ~STATE_REMAINS;
+			ST_ENTRY(st).state |= 1;
+		} else {
+			ret[(*pos)++] = str[i++];
+		}
+	}
+
+	ST_ENTRY(st).pos = i;
+	if (i >= strlen)
+		encode_pop(st);
+}
+
+struct encode_state *
+marshall_init(void *data)
+{
+	struct encode_state *the_st = NULL, **st = &the_st;
+
+	encode_push(st, STATE_SPLIST, data);
+	return the_st;
+}
+
+struct encode_state *
+encode_init(void *data, int ctx)
+{
+	struct encode_state *the_st = NULL, **st = &the_st;
+
+	encode_push(st, STATE_VAR | ctx, data);
+	return the_st;
+}
+
+int
+encode(struct encode_state **st, char *ret, int len)
+{
+	int	 pos;
+
+	D(fprintf(stderr, "encode, enter\n"));
+	for (pos=0; pos < len;) {
+		D(fprintf(stderr, "encode, loop pos=%d\n", pos));
+		D(fprintf(stderr, "encode, loop ret=%.*s\n", pos, ret));
+
+		switch (ST_ENTRY(st).state & STATE_BITMASK) {
+		case STATE_VAR:	     encode_var(st, ret, &pos, len);    break;
+		case STATE_CHAR:     encode_char(st, ret, &pos, len);   break;
+		case STATE_UNDEF:    encode_undef(st, ret, &pos, len);  break;
+		case STATE_SPLIST:   encode_list(st, ret, &pos, len);   break;
+		case STATE_LIST:     encode_list(st, ret, &pos, len);   break;
+		case STATE_MAP:	     encode_map(st, ret, &pos, len);    break;
+		case STATE_SCALAR:   encode_scalar(st, ret, &pos, len); break;
+		}
+
+		if (ST_IS_EMPTY(st))
+			break;
+	}
+
+	return pos;
+}
+
+void
+encode_free(struct encode_state **st)
+{
+
+	/* XXXrcd: !!! */
+}
 
 static inline ssp_val *
 stack_get_ssp_val(struct stack **st)
