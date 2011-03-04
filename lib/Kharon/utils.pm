@@ -126,7 +126,7 @@ sub encode_word {
 	$str =~ s/([\\ ])/\\$1/g;
 
 	# The rest of the control characters we expand into hex:
-	$str =~ s/([^[:print:]])/sprintf('\%02x', ord($1))/ge;
+	$str =~ s/([^[:print:]]|\r|\n)/sprintf('\%02x', ord($1))/ge;
 	return $str;
 }
 
@@ -142,7 +142,7 @@ sub encode_scalar {
 
 ### XXXrcd: don't use [:print:]: locale issues...?  <sigh>
 	# The rest of the control characters we expand into hex:
-	$str =~ s/([^[:print:]])/sprintf('\%02x', ord($1))/ge;
+	$str =~ s/([^[:print:]]|\r|\n)/sprintf('\%02x', ord($1))/ge;
 	return $str;
 }
 
