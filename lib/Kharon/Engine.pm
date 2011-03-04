@@ -18,6 +18,9 @@ sub new {
 	my @protolist = @{$args{protocols}};
 # XXX:	@protolist = (Kharon::Response->new()) if scalar(@protolist) == 0;
 
+	my $logger = $args{$logger};
+	   $logger = Kharon::Log::Syslog->new()	if !defined($logger);
+
 	my $self = {
 		    in		=> undef,	# input file descriptor
 		    out		=> undef,	# output file descriptor
@@ -28,7 +31,7 @@ sub new {
 		    NAME	=> undef,
 		    DESCR	=> undef,
 
-		    logger	=> Kharon::Log::Syslog->new(),
+		    logger	=> $logger,
 		   };
 
 	$self->{resp} = $self->{protolist}->[0];
