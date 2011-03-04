@@ -113,15 +113,17 @@ sub test_protocol {
 #	encode_parse($proto);
 	encode_parse($proto, undef);
 	encode_parse($proto, '');
+	encode_parse($proto, '', '', 'a');
 	encode_parse($proto, '!');
 	encode_parse($proto, join('', map { chr($_) } (0..255)));
 	encode_parse($proto, map { chr($_) } (0..255));
 
-# XXXrcd: Perl parser can't deal with this:
-#	encode_parse($proto, []);
+	# XXXrcd: Perl parser can't deal with these:
+	if ("$class1 $class2" !~ /Perl/) {
+		encode_parse($proto, []);
+		encode_parse($proto, ['']);
+	}
 	encode_parse($proto, [undef]);
-# XXXrcd: Perl parser can't deal with this:
-#	encode_parse($proto, ['']);
 	encode_parse($proto, ['!']);
 	encode_parse($proto, [map { chr($_) } (0..255)]);
 
@@ -131,8 +133,10 @@ sub test_protocol {
 	encode_parse($proto, ["foo", "bar"], \@a);
 	encode_parse($proto, [(0..32)], \@a);
 
-# XXXrcd: Perl parser can't deal with this:
-#	encode_parse($proto, {});
+	# XXXrcd: Perl parser can't deal with this:
+	if ("$class1 $class2" !~ /Perl/) {
+		encode_parse($proto, {});
+	}
 	encode_parse($proto, {1=>undef});
 	encode_parse($proto, {1=>''});
 	encode_parse($proto, {1=>'!'});
@@ -168,7 +172,6 @@ sub test_protocol {
 	encode_parse($proto, {ee=>[(0..32)], '^' => ["&", [[[(0..32)]]], \%h]});
 	encode_parse($proto, {ff=>[(0..32)], '&' => [",", [[[(0..32)]]], \%h]});
 
-MARSHALL:
 	print "     Simple marshalling...\n";
 	marshalling($proto, 'a', 'b! !c');
 
@@ -180,6 +183,13 @@ MARSHALL:
 	marshalling($proto, 'a', join(' ', map { chr($_) . "fsadf" } (0..255)));
 
 	print "     Complex marshalling...\n";
+
+	#
+	# First we make @a and %h more ``interesting'':
+
+	unshift(@a, '');
+	$h{asdcasdc} = '';
+	$h{foobarzz} = \@a;
 
 	marshalling($proto, 'cmd', @a);
 	marshalling($proto, 'cmd', \@a);
