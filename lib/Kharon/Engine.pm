@@ -18,7 +18,7 @@ sub new {
 	my @protolist = @{$args{protocols}};
 # XXX:	@protolist = (Kharon::Response->new()) if scalar(@protolist) == 0;
 
-	my $logger = $args{$logger};
+	my $logger = $args{logger};
 	   $logger = Kharon::Log::Syslog->new()	if !defined($logger);
 
 	my $self = {
