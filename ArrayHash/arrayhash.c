@@ -254,6 +254,12 @@ encode_scalar(struct encode_state **st, char *ret, int *pos, int len)
 				intercharpos = 0;
 				i++;
 				break;
+			default:
+				/* Should not happen, set tmpchar to make
+				 * the compiler happy...
+				 */
+				tmpchar = '\\';
+				break;
 			}
 
 			if (tmpchar != '\\' && tmpchar > '9')
@@ -348,18 +354,32 @@ encode_free(struct encode_state **st)
 	/* XXXrcd: !!! */
 }
 
+static inline int
+stack_get_code(struct stack **st)
+{
+
+	return ST_ENTRY(st).u.code;
+}
+
+static inline void
+stack_set_code(struct stack **st, int code)
+{
+
+	ST_ENTRY(st).u.code = code;
+}
+
 static inline ssp_val *
 stack_get_ssp_val(struct stack **st)
 {
 
-	return &(ST_ENTRY(st).ret);
+	return &(ST_ENTRY(st).u.ret);
 }
 
 static inline void
 stack_set_ssp_val(struct stack **st, ssp_val ret)
 {
 
-	ST_ENTRY(st).ret = ret;
+	ST_ENTRY(st).u.ret = ret;
 }
 
 static inline int
@@ -525,32 +545,34 @@ get_next_lex(struct parse *p)
 	}
 }
 
-static inline int
+static inline void
 state_smtplike(struct self *self, int c)
 {
 	struct stack	**st = &self->st;
 	int		  code;
 
-	code = *(int *)stack_get_ssp_val(st);
+	code = stack_get_code(st);
 
-D(fprintf(stderr, "state_smtplike code=%d got '%c'\n", code, c));
+	D(fprintf(stderr, "state_smtplike code=%d got '%c'\n", code, c));
 
 	if (code < 1000 && c >= '0' && c <= '9') {
-		if (code > 999)
-			return BAD;
+		if (code > 999) {
+			self->done = BAD;
+			return;
+		}
 
 		code *= 10;
 		code += c - '0';
 
-		stack_set_ssp_val(st, (ssp_val)code);
+		stack_set_code(st, code);
 		return;
 	}
 
 	switch (c) {
 	case SPACE:
 		if (code < 100) {
-fprintf(stderr, "state_smtplike: ERROR 2\n");
-			return BAD;
+			self->done = BAD;
+			return;
 		}
 
 		break;
@@ -561,40 +583,28 @@ fprintf(stderr, "state_smtplike: ERROR 2\n");
 
 	case '-':
 		if (code < 100) {
-fprintf(stderr, "state_smtplike: ERROR\n");
-			return BAD;
+			self->done = BAD;
+			return;
 		}
 
 		if (code < 1000) {
 			code += 1000;
-			stack_set_ssp_val(st, (ssp_val)code);
+			stack_set_code(st, code);
 			break;
 		}
 		/*FALLTHROUGH*/
 
 	default:
 		if (code < 1100) {
-fprintf(stderr, "state_smtplike: ERROR 3\n");
-			return BAD;
+			self->done = BAD;
+			return;
 		}
 		self->p.remnant = c;
 		self->code = code - 1000;
-//		if (self->code > 0 && code != self->code) {
-// fprintf(stderr, "CODEs do not match!\n");
-// return BAD;
-//		}
+		/* XXXrcd: should we check if lines have matching codes? */
 		pop(st);
-D(fprintf(stderr, "state_stmplike done: code = %d\n", self->code));
 		break;
-
 	}
-}
-
-/* XXXrcd: huh? why isn't this one necessary?? */
-static inline void
-state_splist(struct parse *p, struct stack *st, int c)
-{
-
 }
 
 static inline int
@@ -623,13 +633,11 @@ state_var(struct parse *p, struct stack **st, int c)
 {
 	ssp_val	*s;
 
-// #if 0 /* XXXrcd: ? */
 	if (chr_matches_ctx(st, c)) {
 		stack_set_flags(st, STATE_DONE);
 		p->remnant = c;
 		return;
 	}
-// #endif
 
 	s = stack_get_ssp_val(st);
 	switch (c) {
@@ -644,7 +652,6 @@ state_var(struct parse *p, struct stack **st, int c)
 		stack_set_state(st, STATE_SCALAR);
 		stack_set_flags(st, STATE_DONE);
 		break;
-/* XXXrcd: pop for the prior two? */
 
 	case LEFTBRACKET:
 		list_begin(s);
@@ -972,7 +979,7 @@ unmarshall(struct self *self, char *input, int len)
 
 	/* XXXrcd: LAME, rewrite */
 
-D(fprintf(stderr, "unmarshalling: '%s'\n", input));
+	D(fprintf(stderr, "unmarshalling: '%s'\n", input));
 
 	parse_reset(self);
 
@@ -1024,11 +1031,16 @@ parse(struct self *self)
 	for (;;) {
 		c = get_next_lex(p);
 
+		if (self->done == BAD)
+			return BAD;
+
 		state = stack_get_state(st);
-D(fprintf(stderr, "loop got '%s' in state = %x\n", char_from(c), state));
+		D(fprintf(stderr, "loop got '%s' in state = %x\n",
+		    char_from(c), state));
+
 		switch (c) {
 		case EOL:
-D(fprintf(stderr, "EOL: state = %x\n", state));
+			D(fprintf(stderr, "EOL: state = %x\n", state));
 			/* We should just continue later... */
 			return 0;
 
@@ -1073,46 +1085,9 @@ D(fprintf(stderr, "EOL: state = %x\n", state));
 		case STATE_VAR:		state_var(p, st, c);		break;
 		case STATE_SCALAR:	state_scalar(p, st, c);		break;
 		case STATE_SMTPLIKE:	state_smtplike(self, c);	break;
-		case STATE_DONE:	state_done(p, st, c);		break;
 		default:
 			/* XXXrcd: hmmm, better errors here... */
 			return BAD;
 		}
 	}
 }
-
-#if 0
-#ifdef USE_PERL5
-void *
-tokenise(char *input, int size)
-{
-	struct stack	*st = NULL;
-	struct parse	 pars;
-	ssp_val		 res;
-
-	parse(&st, &res, input, size);
-
-	return res;
-}
-#else
-int
-main(int argc, char **argv)
-{
-	struct stack	*st = NULL;
-	struct parse	 pars;
-	ssp_val		 res;
-
-	pars.remnant = BAD;
-	while (*++argv) {
-		pars.input = *argv;
-		pars.inlen = strlen(*argv);
-		pars.pos = pars.input;
-
-		parse(&pars, &st, &res);
-		fprintf(stderr, "We got: res = %p\n", res);
-	}
-
-	return 0;
-}
-#endif
-#endif

@@ -6,10 +6,9 @@ our @warnings = qw/	-Wall
 			-Wstrict-prototypes -Wmissing-prototypes
 			-Wpointer-arith -Wno-sign-compare
 			-Wno-traditional -Wreturn-type -Wswitch
-			-Wshadow -Wcast-qual -Wwrite-strings -Wextra
+			-Wno-shadow -Wcast-qual -Wwrite-strings -Wextra
 			-Wno-unused-parameter -Wsign-compare -Werror/;
-
-@warnings = ();
+# @warnings = ();
 
 WriteMakefile(
     NAME                => 'Kharon',

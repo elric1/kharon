@@ -45,9 +45,11 @@ typedef void *ssp_val;
 #define CTX_BACKSLASH		0x00004000
 
 struct entry {
-	ssp_val		ret;
+	union {
+		ssp_val	ret;
+		int	code;
+	} u;
 	int		state;
-
 };
 
 
