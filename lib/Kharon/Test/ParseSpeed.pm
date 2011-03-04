@@ -16,7 +16,7 @@ sub test_it_internal {
 
 	my ($code, @response) = $ahp->Parse();
 
-	return tv_interval($start, [gettimeofday()]). "s";
+	return sprintf("%6.6f", tv_interval($start, [gettimeofday()])). "s";
 }
 
 sub test_it {
