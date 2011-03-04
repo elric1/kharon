@@ -214,6 +214,9 @@ sub RunObj {
 		my $handler = sub { shift; (250, 0, &$code($object, @_)); };
 
 		if (!defined($code)) {
+			my $log = $self->{logger};
+			$log->log('err', "Object does not contain $cmd method");
+
 			throw Kharon::PermanentError("Object does not contain".
 			    " $cmd method");
 		}
@@ -246,6 +249,100 @@ sub RunObj {
 	}
 
 	$self->Run(\%handlers);
+}
+
+sub RunKncAcceptor {
+	my ($self, %args) = @_;
+	my $log = $self->{logger};
+
+	#
+	# defaults for various settings:
+
+	my $maxconns = 1024;
+	my $timeout  = 300;
+
+	#
+	# obtain parameters for arguments:
+
+	my $object   = $args{object};
+	   $maxconns = $args{maxconns}     if defined($args{maxconns});
+	   $timeout  = $args{firsttimeout} if defined($args{firsttimeout});
+
+	#  
+	# perform basic sanity checking on supplied parameters:
+
+	if (ref($object) ne 'CODE') {
+		die "RunKncAcceptor must be provided a function which ".
+		    "generates the object.";
+	}
+
+	$log->log('info', 'Starting to listen...');
+
+	my $listener = \*STDIN;
+
+	#
+	# Set up signal handlers that will become important later:
+
+	local $SIG{ALRM} = sub { my $i = 5; };
+	local $SIG{HUP}  = sub { $listener->close(); undef $listener; };
+
+	while ($maxconns-- > 0) {
+		my $fh;
+		my $ret;
+
+		last if !defined($listener);
+
+		#
+		# XXXrcd: alarm use is suboptimal here but convenient.
+		#         we rely on alarm to bounce us out of accept()...
+
+		alarm($timeout);
+		$ret = accept($fh, $listener);
+		alarm(0);
+
+		if (!defined($fh) || ! $ret) {
+			$log->log('info', "Timeout: $!");
+			last;
+		}
+
+		my %knc_vars;
+		my $line;
+		while (1) {
+			$line = <$fh>;
+			last if !defined($line);
+
+			chomp($line);
+			last if $line eq 'END';
+
+			my ($key, $val) = split(':', $line);
+			$knc_vars{$key} = $val;
+		}
+
+		if ($line eq 'END') {
+
+			# XXXrcd: maybe, we should not pass knc_vars in
+			# directly
+			$args{object} = &$object(%knc_vars);
+
+			$self->{in}  = $fh;
+			$self->{out} = $fh;
+
+			$self->RunObj(%args);
+
+			undef($self->{in});
+			undef($self->{out});
+		}
+
+		undef($fh);
+
+		#
+		# set the interconnexion timeout value:
+
+		$timeout = 60;
+		$timeout = $args{timeout}	if defined($args{timeout});
+	}
+
+	$log->log('info', 'Stop listen...');
 }
 
 1;
