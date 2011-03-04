@@ -36,7 +36,6 @@ sub Connect {
 	$logger->log('debug', "executing " . join(" ", @cmd) . "\n");
 
 	my ($kid, $fh) = $self->SUPER::Connect();
-	$self->{kid} = $kid;
 	return 1 if $kid > 0;
 
 	dup2($fh->fileno(), 0);
