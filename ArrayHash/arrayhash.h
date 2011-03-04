@@ -130,30 +130,6 @@ struct self {
 struct self	*parse_init(void);
 void		 parse_free(struct self *self);
 
-void		*tokenise(char *, int);
-#if 0
-static int	 get_next_lex(struct parse **);
-static int	 get_next_scalar(struct parse **, ssp_val *, int);
-static int	 get_next_list(struct parse **, ssp_val *);
-static int	 get_next_map(struct parse **, ssp_val *);
-static int	 get_next_var(struct parse **, ssp_val *, int);
-// static SV	*mkSV_ssp_val(struct ssp_val *);
-#endif
-
-/*
- * The Perl parse callbacks...
- */
-
-#if 0
-static void	list_begin(ssp_val *);
-static void	list_element(ssp_val *, ssp_val *);
-static void	list_end(ssp_val *);
-static void	map_begin(ssp_val *);
-static void	map_element(ssp_val *, ssp_val *, ssp_val *);
-static void	map_end(ssp_val *);
-#endif
-
-
 struct encode_state	*encode_init(void *, int);
 struct encode_state	*marshall_init(void *);
 int			 encode(struct encode_state **, char *, int);
