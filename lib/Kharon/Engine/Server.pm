@@ -329,6 +329,8 @@ sub RunKncAcceptor {
 
 			$self->RunObj(%args);
 
+			undef($args{object});
+
 			undef($self->{in});
 			undef($self->{out});
 		}
