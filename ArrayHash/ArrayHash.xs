@@ -10,22 +10,6 @@
 
 typedef struct self ArrayHash;
 
-/* append input = array of strings, out = whether to continue, bool */
-
-/* Reset */
-
-/* results returns result array */
-
-/* Parse */
-
-/* Encode */
-
-/* Encode_Error */
-
-/* Marshall */
-
-/* Unmarshall */
-
 MODULE = Kharon::Protocol::ArrayHash  PACKAGE = Kharon::Protocol::ArrayHash
 
 PROTOTYPES: ENABLE
@@ -136,6 +120,34 @@ ArrayHash_Encode(self, code, ...)
 		snprintf(buf, sizeof(buf), "\r\n");
 		sv_catpvn(ret, buf, (STRLEN) strlen(buf));
 	}
+        RETVAL = ret;
+ OUTPUT:
+        RETVAL
+
+SV *
+ArrayHash_Encode_Error(self, code, errstr)
+	ArrayHash	*self
+	int		 code
+	SV		*errstr
+ INIT:
+        char			 buf[8192];
+	size_t			 len;
+	struct encode_state	*st;
+	SV			*ret;
+ CODE:
+	/* XXXrcd: this encodes over itself, just testing */
+	ret = newSVpvn(buf, 0);
+	st = encode_init(errstr, CTX_COMMA|CTX_RIGHTBRACE|CTX_EQUALS);
+	snprintf(buf, sizeof(buf), "%03d . {errstr=", code);
+	sv_catpvn(ret, buf, (STRLEN) strlen(buf));
+	for (;;) {
+		len = encode(&st, buf, sizeof(buf));
+		sv_catpvn(ret, buf, (STRLEN) len);
+		if (len < sizeof(buf))
+			break;
+	}
+	snprintf(buf, sizeof(buf), "}\r\n");
+	sv_catpvn(ret, buf, (STRLEN) strlen(buf));
         RETVAL = ret;
  OUTPUT:
         RETVAL
