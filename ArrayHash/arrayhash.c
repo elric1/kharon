@@ -905,6 +905,7 @@ parse_reset(struct self *self)
 {
 	struct stack	**st = &self->st;
 	ssp_val		 *ret;
+	void		 *banner;
 
 	/* XXXrcd: free internals to stop leaking... */
 
@@ -923,7 +924,9 @@ parse_reset(struct self *self)
 		pop(st);
 	}
 
+	banner = self->banner;
 	memset(self, 0x0, sizeof(*self));
+	self->banner = banner;
 	self->p.remnant = BAD;
 	self->p.lexstate = LEX_NORMAL;
 }

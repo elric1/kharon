@@ -33,9 +33,7 @@ new(class, ...)
 			croak("hash contains unrecognised argument (len)");
 		if (strncmp(key, "banner", strlen("banner")))
 			croak("hash contains unrecognised argument (key)");
-		/* XXXrcd: inc ref count? */
-		self->banner = ST(1+i*2+1);
-		SvREFCNT_inc(self->banner);
+		self->banner = newSVsv(ST(1+i*2+1));
 	}
         RETVAL = self;
  OUTPUT:
@@ -54,6 +52,7 @@ ArrayHash_SendBanner(self)
 	ArrayHash *self
  CODE:
 	/* XXXrcd: hmmm, need to do better than this... */
+	SvREFCNT_inc(self->banner);
 	RETVAL = self->banner;
  OUTPUT:
 	RETVAL
