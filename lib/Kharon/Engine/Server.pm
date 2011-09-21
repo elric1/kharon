@@ -283,7 +283,7 @@ sub RunKncAcceptor {
 	#
 	# Set up signal handlers that will become important later:
 
-	local $SIG{ALRM} = sub { my $i = 5; };
+	local $SIG{ALRM} = sub { return "This does nothing"; };
 	local $SIG{HUP}  = sub { $listener->close(); undef $listener; };
 
 	while ($maxconns-- > 0) {
