@@ -5,6 +5,8 @@
 
 package Kharon::Engine;
 
+use IO::File;
+
 use Carp;
 use Kharon::Log::Syslog;
 
