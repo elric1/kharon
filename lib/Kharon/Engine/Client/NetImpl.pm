@@ -128,8 +128,8 @@ sub Connect {
 			$hr = string_to_server($def, $hr);
 		}
 
-		$ConnectTimeout= firstkey('ConnectTimeout', $hr, $def,   5);
-		$DataTimeout   = firstkey('DataTimeout',    $hr, $def, 300);
+		$ConnectTimeout= firstkey('ConnectTimeout', $hr, $def,  5);
+		$DataTimeout   = firstkey('DataTimeout',    $hr, $def, 60);
 
 		validate_server('Connect', $hr);
 
@@ -150,7 +150,7 @@ sub Connect {
 			next;
 		}
 
-		$sock->timeout($DataTimeout);
+		$self->{DataTimeout} = $ConnectTimeout;
 
 		# Get around the fact that IO::Socket apparently
 		# marks descriptors FD_CLOEXEC
@@ -160,9 +160,10 @@ sub Connect {
 		$self->{connexion} = $hr;
 
 		my $ret = 0;
-#		eval {
+		eval {
 			$ret = $self->NEXT::Connect();
-#		};
+		};
+		$self->{DataTimeout} = $DataTimeout;
 		return $ret if ($ret == 1);
 
 		undef $self->{socket};

@@ -49,6 +49,13 @@ sub Disconnect {
 sub Read {
 	my ($self) = @_;
 	my $buf;
+	my $rin = '';
+
+	vec($rin, $self->{in}->fileno(), 1) = 1;
+
+	my $nfound = select($rin, undef, undef, $self->{DataTimeout});
+
+	return undef if !$nfound;
 
 	my $ret = sysread($self->{in}, $buf, 32768);
 
