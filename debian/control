@@ -1,0 +1,15 @@
+Source: libkharon-perl
+Section: perl
+Priority: optional
+Build-Depends: debhelper (>= 7), perl
+Maintainer: elric <elric@>
+Standards-Version: 3.8.3
+Homepage: http://search.cpan.org/dist/Kharon/
+
+Package: libkharon-perl
+Architecture: any
+Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Description: a client/server application development framework
+ a client/server application development framework
+ .
+ This description was automagically extracted from the module by dh-make-perl.
