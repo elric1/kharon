@@ -11,7 +11,7 @@ use base qw/Kharon::Engine::Client::Cmd/;
 use warnings;
 use strict;
 
-my $knc = "/usr/pkg/bin/knc";
+my $knc = "/usr/bin/knc";
 
 sub Connect {
 	my $self = shift;
