@@ -137,6 +137,7 @@ sub Connect {
 		    "connect attempt $hr->{PeerAddr}:$hr->{PeerPort}");
 
 		my $sock = IO::Socket::INET->new(
+						 Proto => "tcp",
 						 PeerAddr => $hr->{PeerAddr},
 						 PeerPort => $hr->{PeerPort},
 						 Timeout => $ConnectTimeout
