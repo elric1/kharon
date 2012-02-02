@@ -1057,6 +1057,11 @@ parse(struct self *self)
 				if (state == STATE_SCALAR)
 					stack_set_flags(st, STATE_DONE);
 
+				if (state == STATE_SMTPLIKE) {
+					pop(st);
+					state = stack_get_state(st);
+				}
+
 				if (state == STATE_VAR)
 					pop(st);
 
@@ -1069,8 +1074,10 @@ parse(struct self *self)
 				list_end(ret);
 				return 0;
 			} else {
-				push(st);
-				stack_set_state(st, STATE_SMTPLIKE);
+				if (state != STATE_SMTPLIKE) {
+					push(st);
+					stack_set_state(st, STATE_SMTPLIKE);
+				}
 				continue;
 			}
 			break;

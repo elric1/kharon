@@ -69,8 +69,8 @@ sub run_test {
 	# Let's do a few simple cases first:
 
 	my @ret;
-#	@ret = tokenise(['']);
-#	die "did not get () from ''" if scalar(@ret);
+	@ret = tokenise(['']);
+	die "did not get () from ''" if scalar(@ret);
 
 	@ret = tokenise(['!']);
 	die "did not get (undef) from '!'"

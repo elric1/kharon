@@ -110,7 +110,7 @@ sub test_protocol {
 
 	print "     Simple responses...\n";
 
-#	encode_parse($proto);
+	encode_parse($proto);
 	encode_parse($proto, undef);
 	encode_parse($proto, '');
 	encode_parse($proto, '', '', 'a');
