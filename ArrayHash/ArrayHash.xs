@@ -119,6 +119,10 @@ ArrayHash_Encode(self, code, ...)
 		snprintf(buf, sizeof(buf), "\r\n");
 		sv_catpvn(ret, buf, (STRLEN) strlen(buf));
 	}
+	if (items == 2) {
+		snprintf(buf, sizeof(buf), "%03d . \r\n", code);
+		sv_catpvn(ret, buf, (STRLEN) strlen(buf));
+	}
         RETVAL = ret;
  OUTPUT:
         RETVAL
