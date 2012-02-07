@@ -3,6 +3,10 @@ package Kharon;
 use warnings;
 use strict;
 
+1;
+
+__END__
+
 =head1 NAME
 
 Kharon - a client/server application development framework
@@ -24,5 +28,3 @@ client/server applications.
 =head1 AUTHOR
 
 Roland C. Dowdeswell, C<< <elric at imrryr.org> >>
-
-1; # End of Kharon
