@@ -8,7 +8,7 @@ Homepage: http://search.cpan.org/dist/Kharon/
 
 Package: libkharon-perl
 Architecture: any
-Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}, liberror-perl
 Description: a client/server application development framework
  a client/server application development framework
  .
