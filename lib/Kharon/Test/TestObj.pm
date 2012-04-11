@@ -51,4 +51,9 @@ sub exception {
 	die "alkjsnckjsanclkjac";
 }
 
+sub retnothing {
+
+	return;
+}
+
 1;

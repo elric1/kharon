@@ -31,6 +31,18 @@ sub run_test {
 	# is a test.
 	print "  Child is $remote->{kid}\n";
 
+	my $ret = $remote->retnothing();
+	if (defined($ret)) {
+		die "method retnothing evaluated in a scalar context should " .
+		    "be undef";
+	}
+
+	my @ret = $remote->retnothing();
+	if (@ret > 0) {
+		die "method retnothing evaluated in a array context should " .
+		    "have zero length";
+	}
+
 	my %h = ( '!' => '&', ' ' => '=', ',' => ',');
 
 	do_both($local, $remote, 'uniq', "a", "a", "b", (1..255));

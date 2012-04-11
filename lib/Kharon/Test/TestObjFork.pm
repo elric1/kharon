@@ -25,7 +25,8 @@ sub run_daemon {
 
 	$pes->RunObj(
 		object => $obj,
-		cmds => [ qw/inc query exception complicated uniq encapsulate/ ]
+		cmds => [ qw/inc query exception complicated uniq encapsulate
+			     retnothing/ ]
 	);
 	exit(0);
 }
@@ -47,7 +48,8 @@ sub new {
 	bless($self, $isa);
 }
 
-eval mk_scalar_methods('Kharon::Test::TestObj', qw/inc query exception/);
+eval mk_scalar_methods('Kharon::Test::TestObj',
+    qw/inc query exception retnothing/);
 eval mk_array_methods('Kharon::Test::TestObj',
     qw/complicated uniq encapsulate/);
 

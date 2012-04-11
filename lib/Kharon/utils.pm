@@ -72,9 +72,12 @@ sub mk_scalar_methods {
 		$ret .= generate_function($parent, $method,
 		    '	my @ret = $self->{pec}->CommandExc("' . $method .
 			    '", @args);' . "\n" .
-		    '	if (scalar(@ret) != 1) {' . "\n" .
+		    '	if (scalar(@ret) > 1) {' . "\n" .
 		    "		throw Kharon::PermanentError('$err', 500);\n" .
 		    "	}\n" .
+		    "	return		if !defined(wantarray());\n" .
+		    '	return ()	if @ret == 0 && wantarray();' . "\n" .
+		    '	return undef	if @ret == 0;' . "\n" .
 		    '	return $ret[0];');
 	}
 
