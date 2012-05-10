@@ -138,14 +138,4 @@ sub list_handlers {
 	}
 }
 
-#
-# XXXrcd: register common???  Maybe I'll leave this dead...
-
-#sub register_common {
-#	my ($self) = @_;
-#
-#	$self->register_handler("krb", \&krb_handler);
-#	$self->register_handler("isg", \&isg_handler);
-#}
-
 1;
