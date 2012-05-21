@@ -6,7 +6,8 @@ use ExtUtils::MakeMaker;
 # We allow a number of env vars to control the behaviour of Makefile.PL:
 #
 #	KHARON_ENABLE_DEVELOPER		Turns on compiler warnings.  This may
-#					break on many arches because warnings	#					vary depending on the version of the
+#					break on many arches because warnings
+#					vary depending on the version of the
 #					compiler.
 #	KHARON_KNCPATH			Path to knc (defaults to /usr/bin/knc).
 #					(May not contain commas.)
