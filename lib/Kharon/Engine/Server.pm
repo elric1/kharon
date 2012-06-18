@@ -7,6 +7,10 @@ package Kharon::Engine::Server;
 
 use base qw/Kharon::Engine::Std/;
 
+use Sys::Hostname;
+
+use Kharon::utils qw/getclassvar/;
+
 use Kharon::TransientError qw(:try);
 use Kharon::PermanentError qw(:try);
 
@@ -209,7 +213,31 @@ sub RunObj {
 
 	my $object = $args{object};
 
-	for $cmd (@{$args{cmds}}) {
+	my @rosccmds = getclassvar($object, "KHARON_RO_SC_EXPORT");
+	my @roaccmds = getclassvar($object, "KHARON_RO_AC_EXPORT");
+	my @rwsccmds = getclassvar($object, "KHARON_RW_SC_EXPORT");
+	my @rwaccmds = getclassvar($object, "KHARON_RW_AC_EXPORT");
+
+	my @rocmds = (@rosccmds, @roaccmds);
+	my @rwcmds = (@rwsccmds, @rwaccmds);
+
+	my $masterfunc = $object->can("KHARON_MASTER");
+
+	my $cmds      = $args{cmds};
+	my $refercmds = $args{refercmds};
+	my $exitcmds  = $args{exitcmds};
+	my $master    = $args{next_server};	# XXXrcd: legacy
+	   $master    = $args{master};
+
+	$cmds      = [@rocmds, @rwcmds]	if !defined($cmds);
+	$exitcmds  = ['quit', 'bye']	if !defined($exitcmds);
+	$master    = &$masterfunc()	if !defined($master) &&
+					    defined($masterfunc);
+	undef $master			if hostname() eq $master;
+	$refercmds = [@rwcmds]		if !defined($refercmds) &&
+					    defined($master);
+
+	for $cmd (@$cmds) {
 		my $code = $object->can($cmd);
 		my $handler = sub { shift; (250, 0, &$code($object, @_)); };
 
@@ -224,28 +252,22 @@ sub RunObj {
 		$handlers{$cmd} = $handler;
 	}
 
-	$args{exitcmds} = ['quit', 'bye'] if !exists($args{exitcmds});
-	for $cmd (@{$args{exitcmds}}) {
+	for $cmd (@$exitcmds) {
 		$handlers{$cmd} = sub { (220, 1, 'bye') };
 	}
 
-	if (ref($args{refercmds}) eq 'ARRAY') {
-		my $server = $args{next_server};
+	if (ref($refercmds) eq 'ARRAY') {
+		die "RunObj: next_server not defined" if !defined($master);
 
-		die "RunObj: next_server not defined" if !defined($server);
-
-		for $cmd (@{$args{refercmds}}) {
-			$handlers{$cmd} = sub { (301, 0, $server) };
+		for $cmd (@$refercmds) {
+			$handlers{$cmd} = sub { (301, 0, $master) };
 		}
-	} elsif (ref($args{refercmds}) eq 'HASH') {
-		my %h = %{$args{refercmds}};
+	} elsif (ref($refercmds) eq 'HASH') {
+		my %h = %$refercmds;
 
 		for $cmd (keys %h) {
 			$handlers{$cmd} = sub { (301, 0, $h{$cmd}) };
 		}
-	} elsif (exists($args{refercmds})) {
-		die "refercmds must be a list of commands or a hash of " .
-		    "cmd->server";
 	}
 
 	$self->Run(\%handlers);
