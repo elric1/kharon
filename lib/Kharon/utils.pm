@@ -7,6 +7,7 @@ package Kharon::utils;
 use Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw{
+	getclassvar
 	get_next_word
 	get_next_var
 	encode_var
@@ -82,6 +83,27 @@ sub mk_scalar_methods {
 	}
 
 	$ret;
+}
+
+sub getclassvar {
+	my ($obj, $var) = @_;
+	my @ret;
+
+	my $class = ref($obj);
+
+	#
+	# Find the array variable in $obj's class or one of its superclasses:
+
+	no strict "refs";
+	for my $c ($class, @{"$class\::ISA"}) {
+		next if !exists(${"$c\::"}{$var});
+
+		@ret = @{"$c\::$var"};
+		last;
+	}
+	use strict "refs";
+
+	return @ret;
 }
 
 #
