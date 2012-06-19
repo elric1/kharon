@@ -56,7 +56,8 @@ sub _runfunc {
 	}
 
 	if (scalar(@ret) > 1) {
-		throw Kharon::PermanentError('$err', 500);
+		throw Kharon::PermanentError("Kharon scalar method " .
+		    "\"$method\" returned a list", 500);
 	}
 
 	return          if !defined(wantarray());
