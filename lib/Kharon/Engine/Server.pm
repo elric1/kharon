@@ -233,7 +233,8 @@ sub RunObj {
 	$exitcmds  = ['quit', 'bye']	if !defined($exitcmds);
 	$master    = &$masterfunc()	if !defined($master) &&
 					    defined($masterfunc);
-	undef $master			if hostname() eq $master;
+	undef $master			if  defined($master) &&
+					    hostname() eq $master;
 	$refercmds = [@rwcmds]		if !defined($refercmds) &&
 					    defined($master);
 
