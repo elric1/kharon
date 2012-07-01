@@ -58,6 +58,8 @@ sub merge_result {
 		$new->{$k} = $result->{$k};
 	}
 
+	$new = {} if !defined($new);
+
 	${$ret}->{$key} = $new;
 }
 
