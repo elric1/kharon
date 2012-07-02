@@ -19,7 +19,7 @@ use strict;
 sub sql_command {
 	my ($dbh, $stmt, @values) = @_;
 
-#XXX	print STDERR "SQL: $stmt\n"	if $self->{debug};
+#XXX	print STDERR "SQL: $stmt\n";
 
 	my $sth;
 	eval {
@@ -34,7 +34,7 @@ sub sql_command {
 
 	my $err = $@;
 	if ($err) {
-#XXX		print STDERR "Rollback...\n"	if $self->{debug};
+#XXX		print STDERR "Rollback...\n";
 		$dbh->rollback();
 		die $err;
 	}
@@ -45,14 +45,19 @@ sub merge_result {
 	my ($lists, $ret, $key, $result) = @_;
 	my $new;
 
-	my @lists = map { $_->[2] } @$lists;
+	my @lists = map { defined($_->[3]) ? $_->[3] : $_->[2] } @$lists;
 
 	$new = ${$ret}->{$key};
-	for my $k (keys %$result) {
-		next if !defined($result->{$k});
 
+	for my $l (@lists) {
+		$new->{$l} = [] if !exists($new->{$l});
+	}
+
+	for my $k (keys %$result) {
 		if (grep { $_ eq $k } @lists) {
-			push(@{$new->{$k}}, $result->{$k});
+			if (defined($result->{$k})) {
+				push(@{$new->{$k}}, $result->{$k});
+			}
 			next;
 		}
 		$new->{$k} = $result->{$k};
@@ -75,34 +80,65 @@ sub generic_query {
 	my $tabledesc = $schema->{$table};
 
 	my $key_field = $tabledesc->{fields}->[0];
-	my %fields = map { $_ => 1 } @{$tabledesc->{fields}};
+	my %fields = map { $table.'.'.$_ => 1 } @{$tabledesc->{fields}};
 	my $lists = $tabledesc->{lists};
 
 	my $join = '';
 
 	for my $l (@$lists) {
-		my ($ltable, $kfield, $vfield) = @$l;
+		my ($ltable, $kfield, $vfield, $as) = @$l;
 		$join = "LEFT JOIN $ltable ON " .
 		    "$table.$key_field = $ltable.$kfield";
-		$fields{"$ltable.$vfield"} = 1;
+
+		if (defined($as)) {
+			$fields{"$ltable.$vfield AS $as"} = 1;
+		} else {
+			$fields{"$ltable.$vfield"} = 1;
+		}
+
+		if (exists($query{$vfield})) {
+			my $v = $query{$vfield};
+			if (ref($v) eq 'ARRAY') {
+				my @tmpwhere;
+
+				for my $i (@$v) {
+					push(@tmpwhere, "$ltable.$vfield = ?");
+					push(@bindv, $i);
+				}
+
+				if (@$v) {
+					push(@where, '(' .
+					    join(' OR ', @tmpwhere) .
+					    ')');
+				}
+			} else {
+				push(@where, "$ltable.$vfield = ?");
+				push(@bindv, $v);
+			}
+
+			delete $query{$vfield};
+		}
 	}
 
-	my %tmpquery = %query;
-	for my $field (keys %fields) {
-		next if !exists($query{$field});
+	my @errfields;
+	for my $field (keys %query) {
+		if (!exists($fields{$table.'.'.$field})) {
+			push(@errfields, $field);
+			next;
+		}
 
-		push(@where, "$field = ?");
+		push(@where, "$table.$field = ?");
 		push(@bindv, $query{$field});
-		delete $tmpquery{$field};
 	}
 
-	if (scalar(keys %tmpquery) > 0) {
-		die [500, "Fields: " . join(',', keys %tmpquery) .
-		    " do not exit in $table table"];
+	if (@errfields) {
+		die [500, "Fields: " . join(',', @errfields) .
+		    " do not exist in $table table"];
 	}
 
+	# XXXrcd: BROKEN! BROKEN! must deal with $ltable...
 	for my $field (@$qfields) {
-		delete $fields{$field};
+		delete $fields{$table.'.'.$field};
 	}
 
 	my $where = join( ' AND ', @where );
@@ -112,7 +148,7 @@ sub generic_query {
 	if (scalar(keys %fields) > 0) {
 		my %tmp_fields = %fields;
 
-		$tmp_fields{$key_field} = 1;
+		$tmp_fields{$table.'.'.$key_field} = 1;
 		$fields = join(',', keys %tmp_fields);
 	} else {
 		$fields = "COUNT($key_field)";
@@ -136,6 +172,7 @@ sub generic_query {
 	my $ret;
 	if (scalar(keys %fields) == 1 && $tabledesc->{wontgrow}) {
 		$fields = join('', keys %fields);
+		$fields =~ s/^[^.]*\.//o;
 		for my $result (@$results) {
 			push(@$ret, $result->{$fields});
 		}
