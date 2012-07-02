@@ -83,12 +83,12 @@ sub generic_query {
 	my %fields = map { $table.'.'.$_ => 1 } @{$tabledesc->{fields}};
 	my $lists = $tabledesc->{lists};
 
-	my $join = '';
+	my @join;
 
 	for my $l (@$lists) {
 		my ($ltable, $kfield, $vfield, $as) = @$l;
-		$join = "LEFT JOIN $ltable ON " .
-		    "$table.$key_field = $ltable.$kfield";
+		push(@join, "LEFT JOIN $ltable ON " .
+		    "$table.$key_field = $ltable.$kfield");
 
 		if (defined($as)) {
 			$fields{"$ltable.$vfield AS $as"} = 1;
@@ -140,6 +140,8 @@ sub generic_query {
 	for my $field (@$qfields) {
 		delete $fields{$table.'.'.$field};
 	}
+
+	my $join = join(' ', @join);
 
 	my $where = join( ' AND ', @where );
 	$where = "WHERE $where" if length($where) > 0;
