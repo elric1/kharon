@@ -8,6 +8,7 @@ use Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw{
 		sql_command
+		generic_modify
 		generic_query
 	};
 
@@ -20,6 +21,7 @@ sub sql_command {
 	my ($dbh, $stmt, @values) = @_;
 
 #XXX	print STDERR "SQL: $stmt\n";
+#XXX	print STDERR "BIND: " . join(', ', @values) . "\n";
 
 	my $sth;
 	eval {
@@ -50,13 +52,13 @@ sub merge_result {
 	$new = ${$ret}->{$key};
 
 	for my $l (@lists) {
-		$new->{$l} = [] if !exists($new->{$l});
+		$new->{$l} = {} if !exists($new->{$l});
 	}
 
 	for my $k (keys %$result) {
 		if (grep { $_ eq $k } @lists) {
 			if (defined($result->{$k})) {
-				push(@{$new->{$k}}, $result->{$k});
+				$new->{$k}->{$result->{$k}} = 1;
 			}
 			next;
 		}
@@ -66,6 +68,27 @@ sub merge_result {
 	$new = {} if !defined($new);
 
 	${$ret}->{$key} = $new;
+}
+
+sub finalise_result {
+	my ($lists, $in) = @_;
+
+	my $ret;
+	for my $i (keys %$in) {
+		my $new;
+
+		for my $j (keys %{$in->{$i}}) {
+			if (ref($in->{$i}->{$j}) eq 'HASH') {
+				$new->{$j} = [keys %{$in->{$i}->{$j}}];
+				next;
+			}
+			$new->{$j} = $in->{$i}->{$j};
+		}
+
+		$ret->{$i} = $new;
+	}
+
+	return $ret;
 }
 
 sub generic_query {
@@ -206,6 +229,10 @@ sub generic_query {
 		}
 	}
 
+	if ($is_uniq) {
+		$ret = finalise_result($lists, $ret);
+	}
+
 	if ($is_uniq && grep {$key_field eq $_} (@$qfields)) {
 		#
 		# this should mean that we get only a single
@@ -216,5 +243,94 @@ sub generic_query {
 
 	return $ret;
 }
+
+sub generic_modify {
+	my ($dbh, $schema, $table, $target, %args) = @_;
+
+	my $tabledesc = $schema->{$table};
+	if (!defined($tabledesc)) {
+		die [503, "schema element $table not defined."];
+	}
+
+	my $key_field = $tabledesc->{fields}->[0];
+	my %fields = map { $_ => 1 } @{$tabledesc->{fields}};
+	my $lists = $tabledesc->{lists};
+
+	#
+	# XXXrcd: validate %args
+
+	my @setv;
+	my @bindv;
+
+	for my $field (keys %fields) {
+		next if !exists($args{$field});
+
+		push(@setv, "$field = ?");
+		push(@bindv, $args{$field});
+		delete $args{$field};
+	}
+
+	if (@setv) {
+		my $stmt = "UPDATE $table SET " . join(',', @setv) .
+		    " WHERE $key_field = ?";
+		sql_command($dbh, $stmt, @bindv, $target);
+	}
+
+	for my $list_entry (@$lists) {
+		my ($ltable, $key, $val, $field) = @$list_entry;
+
+		$field = $val		if !defined($field);
+
+		my $op = '';
+		$op .= 'set_'		if exists($args{$field});
+		$op .= 'add_'		if exists($args{"add_$field"});
+		$op .= 'del_'		if exists($args{"del_$field"});
+		next			if $op eq '';
+
+		if (length($op) > 4) {
+			die [503, "Can't both add/del owners and set owners"];
+		}
+
+		$op = ''		if $op eq 'set_';
+
+		if (ref($args{$op . $field}) ne 'ARRAY') {
+			die [503, "${op}$field takes an array ref"];
+		}
+
+		my $stmt;
+		my @data = @{$args{$op . $field}};
+
+		delete $args{$op . $field};
+
+		if ($op eq 'del_') {
+			$stmt = "DELETE FROM $ltable WHERE $key = ? AND (" .
+			    join(' OR ', map { "$val = ?" } (@data)) . ")";
+			sql_command($dbh, $stmt, $target, @data);
+			next;
+		}
+
+		#
+		# Now, we know that we're adding.  But first clear the
+		# entire list if we're performing a set operation.
+
+		if ($op eq '') {
+			my $stmt = "DELETE FROM $ltable WHERE $key = ?";
+			sql_command($dbh, $stmt, $target);
+		}
+
+		#
+		# For the last one, we know that we're adding so let's avoid
+		# a level of indentation that will make the code a little
+		# harder to read...
+
+		for my $datum (@data) {
+			$stmt = "INSERT INTO $ltable($key, $val) VALUES (?, ?)";
+			sql_command($dbh, $stmt, $target, $datum);
+		}
+	}
+
+	return undef;
+}
+
 
 1;
