@@ -211,7 +211,8 @@ sub generic_format {
 					$self->qout($k . ":", join(',',
 					    @{$r->{$k}}));
 				} else {
-					$self->qout($k . ":", $r->{$k});
+					$self->qout($k . ":", $r->{$k})
+					    if defined($r->{$k});
 				}
 			}
 			next;
