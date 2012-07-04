@@ -56,16 +56,16 @@ sub run_cmd {
 	my @ret;
 	my $func;
 
-	my %hcmds = getclasshash($self, 'KHARON_HASHIFY_COMMANDS');
+	my %hcmds   = getclasshash($self, 'KHARON_HASHIFY_COMMANDS');
+	my %aliases = getclasshash($self, 'KHARON_COMMAND_ALIASES');
 
 	my $out		= $self->{out};
 	my $obj		= $self->{obj};
-	my $aliases	= $self->{aliases};
 	my $formats	= $self->{formats};
 	my $cmds	= $self->{cmds};
 
-	$cmd  = $aliases->{$cmd}	if exists($aliases->{$cmd});
-	$func = $cmds->{$cmd}		if exists($cmds->{$cmd});
+	$cmd  = $aliases{$cmd}		if  exists($aliases{$cmd});
+	$func = $cmds->{$cmd}		if  exists($cmds->{$cmd});
 	$func = $obj->can($cmd)		if !defined($func);
 
 	if (my $override = $self->can("CMD_" . $cmd)) {
