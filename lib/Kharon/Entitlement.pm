@@ -111,7 +111,7 @@ sub check {
 		$self->throw_eperm($ret);
 	}
 
-	return $ret != 1;
+	return $ret == 1 ? 1 : 0;
 }
 
 1;
