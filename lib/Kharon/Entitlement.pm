@@ -33,31 +33,85 @@ sub set_creds {
 }
 
 #
-# Check a single entitlement
+# Set options that affect the behaviour of the object.
+
+sub set_opt {
+	my ($self, $opt, $val) = @_;
+
+	if ($opt eq 'throw') {
+		# XXXrcd: ensure that $val is either 0 or 1.
+
+		$self->{throw} = $val;
+	} else {
+		# XXXrcd: probably shouldn't just die but rather do something
+		#         with the error class or something...
+		die "set_opt: $opt is not a valid option.";
+	}
+}
+
+#
+# Throw an error when permission is denied.  This is expected to be
+# over-ridden by child modules to fit in with their error handling
+# schemes.
+
+sub throw_eperm {
+	my ($self, $msg) = @_;
+
+	die [502, $msg];
+}
+
+#
+# Check an entitlement.
+#
+# This is the method that we expect child classes to over-ride when
+# defining the entitlements.  It takes as arguments the name of the
+# entitlement and any associated arguments that are passed to it.  We
+# generally refer to the entitlement as a ``verb''.
 #
 # Args:
-#	$ent		Entitlement to check
+#	$verb		Entitlement to check
+#	@predicate	The remaining arguments.
+#
+# The return value of check1 can be 0 meaning permission denied, 1
+# meaning allowed or a textual message which means permission denied
+# with the textual message being an error string.  You cannot have a
+# textual error string which is either 0 or 1.
+#
+# XXXrcd: should we allow an object or reference to be returned which
+#         will simply be thrown if $self->{throw} is defined?
+#
 sub check1 {
 	# The base class fails closed
 	return 0;
 }
 
 #
-# Check a list of entitlements returning true if any match.
+# Check an entitlement.
 #
 # Args:
-#	@ents		A list of entitlements to check
+#	$verb		Entitlement to check
+#	@predicate	The remaining arguments.
 #
-# This will generally not be overridden by subclasses unless
-# there is a substantial performance benefit that can be achieved.
+# The return value is 0 for permission denied or 1 for allowed.
+#
+# This will generally not be overridden by subclasses as it implements
+# class specific behaviour.  The results of check1 are converted into
+# a strict boolean and if the throw option is set an error message is
+# thrown by calling the method throw_eperm.
 #
 sub check {
-	my ($self, @ents) = @_;
+	my ($self, $verb, @predicate) = @_;
 
-	for my $ent (@ents) {
-		return 1 if ($self->check1($ent) == 1);
+	my $ret = $self->check1($verb, @predicate);
+
+	if (($ret != 1 || length($ret) != 1) && $self->{throw}) {
+		if ($ret == 0 && length($ret) == 1) {
+			$ret = "Permission denied.";
+		}
+		$self->throw_eperm($ret);
 	}
-	return 0;
+
+	return $ret != 1;
 }
 
 1;
