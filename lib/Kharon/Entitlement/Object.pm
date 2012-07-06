@@ -3,7 +3,7 @@
 # want to use a bit of OO to define the ACLs.
 #
 
-package Kharon::Entitlement::Super
+package Kharon::Entitlement::Super;
 use base qw(Kharon::Entitlement);
 
 use warnings;
