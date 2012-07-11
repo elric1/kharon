@@ -18,15 +18,24 @@ use warnings;
 use strict;
 
 sub new {
-	my $proto = shift;
+	my ($proto, %args) = @_;
 	my $class = ref($proto) || $proto;
 
-	my $self = $class->SUPER::new(@_);
+	my $self = $class->SUPER::new(%args);
 
 	$self->{NAME} = "STDIN/STDOUT Engine Server";
 
+	$self->{acl} = $args{acl}	if exists($args{acl});
+
 	bless ($self, $class);
 	return $self;
+}
+
+sub set_acl {
+	my ($self, $acl) =@_;
+
+	$self->{acl} = $acl;
+	return;
 }
 
 #
@@ -62,7 +71,7 @@ sub new {
 #}
 
 sub do_command {
-	my ($self, $handlers, $line) = @_;
+	my ($self, $opts, $handlers, $line) = @_;
 	my ($cmd, @args);
 	my $log = $self->{logger};
 
@@ -83,6 +92,13 @@ sub do_command {
 		$cmd = '';
 	}
 
+	# Deal with the exit cmds up front:
+	if (exists($opts->{exitcmds}) &&
+	    grep { $cmd eq $_ } @{$opts->{exitcmds}}) {
+		eval { $self->Write($self->{resp}->Encode(220, 'bye')); };
+		return 1;
+	}
+
 	# Bail if we don't have a handler...
 	if (!defined($handlers->{$cmd})) {
 		$log->cmd_log('err', 400, $cmd, @args);
@@ -100,9 +116,28 @@ sub do_command {
 	my $last = 0;
 	my @reflist;
 
+	# Check ACLs if they're defined:
+	my $err;
+	if (defined($self->{acl})) {
+		my $perm;
+
+		eval { $perm = $self->{acl}->check($cmd, @args); };
+		$err = $@;
+ 
+		if (!$err && $perm != 1) {
+			throw Kharon::PermanentError("ACL object must be " .
+			    "defined to throw exceptions", 500);
+		}
+	}
+
 	my $func = $handlers->{$cmd};
-	eval { ($code, $last, @reflist) = &$func($cmd, @args); };
-	if ($@) {
+
+	if (!$err) {
+		eval { ($code, $last, @reflist) = &$func($cmd, @args); };
+		$err = $@ if $@;
+	}
+
+	if ($err) {
 		$code = 599;
 		$last = 0;
 		(@reflist) = ($@);
@@ -144,7 +179,7 @@ sub do_command {
 }
 
 sub Run {
-	my ($self, $handlers) = @_;
+	my ($self, $opts, $handlers) = @_;
 
 	if (!defined($handlers)) {
 		throw Kharon::PermanentError("No command handlers defined",
@@ -152,8 +187,8 @@ sub Run {
 	}
 
 	# Run initializer
-	if (defined($handlers->{INIT})) {
-		if (!&{$handlers->{INIT}}()) {
+	if (defined($opts->{INIT})) {
+		if (!&{$opts->{INIT}}()) {
 			throw Kharon::PermanentError("Handler INIT error", 500);
 		}
 	}
@@ -187,7 +222,7 @@ sub Run {
 		$remainder = ${^POSTMATCH};
 
 		try {
-			$last = $self->do_command($handlers, $line);
+			$last = $self->do_command($opts, $handlers, $line);
 		} catch Kharon::KharonError with {
 			# Run destructor
 			if (defined($handlers->{DESTROY})) {
@@ -253,10 +288,6 @@ sub RunObj {
 		$handlers{$cmd} = $handler;
 	}
 
-	for $cmd (@$exitcmds) {
-		$handlers{$cmd} = sub { (220, 1, 'bye') };
-	}
-
 	if (ref($refercmds) eq 'ARRAY') {
 		die "RunObj: next_server not defined" if !defined($master);
 
@@ -271,7 +302,7 @@ sub RunObj {
 		}
 	}
 
-	$self->Run(\%handlers);
+	$self->Run({exitcmds => $exitcmds}, \%handlers);
 }
 
 sub RunKncAcceptor {
