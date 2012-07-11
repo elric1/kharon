@@ -20,9 +20,8 @@ sub new {
 
 	my $self = $class->SUPER::new(%args);
 
-	$args{subobject} = $args{subobject};
+	$self->{subobject} = $args{subobject};
 
-	bless($self, $class);
 	return $self;
 }
 
@@ -30,6 +29,23 @@ sub set_subobject {
 	my ($self, $subobject) = @_;
 
 	$self->{subobject} = $subobject;
+	$self->set_creds(@{$self->{credlist}});
+}
+
+sub set_creds {
+	my ($self, @creds) = @_;
+	my $subobj = $self->{subobject};
+
+	$self->SUPER::set_creds(@creds);
+
+	return if !defined($subobj);
+
+	my $f = $subobj->can('KHARON_SET_CREDS');
+	if (!defined($f)) {
+		die "Entitlement subobject does not implement method set_creds";
+	}
+
+	return &$f($subobj, @creds);
 }
 
 sub check1 {
@@ -37,18 +53,18 @@ sub check1 {
 	my $subobj = $self->{subobject};
 	my $acl;
 
-	$acl = $subobject->can("KHARON_COMMON_ACL");
+	$acl = $subobj->can("KHARON_COMMON_ACL");
 	if (defined($acl)) {
-		my $ret = $acl($self, $verb, @args);
+		my $ret = &$acl($subobj, $verb, @args);
 
 		if (defined($ret)) {
 			return $ret;
 		}
 	}
 
-	$acl = $subobject->can("KHARON_ACL_$verb");
+	$acl = $subobj->can("KHARON_ACL_$verb");
 	if (defined($acl)) {
-		return $acl($self, $verb, @args);
+		return &$acl($subobj, $verb, @args);
 	}
 
 	return 0;
