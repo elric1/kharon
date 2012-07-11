@@ -104,14 +104,14 @@ sub check {
 
 	my $ret = $self->check1($verb, @predicate);
 
-	if (($ret != 1 || length($ret) != 1) && $self->{throw}) {
-		if ($ret == 0 && length($ret) == 1) {
+	if ($ret ne '1' && $self->{throw}) {
+		if ($ret eq '0') {
 			$ret = "Permission denied.";
 		}
 		$self->throw_eperm($ret);
 	}
 
-	return $ret == 1 ? 1 : 0;
+	return $ret eq '1' ? 1 : 0;
 }
 
 1;
