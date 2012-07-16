@@ -6,8 +6,6 @@
 package Kharon::Entitlement::Or;
 use base qw(Kharon::Entitlement::List);
 
-use UNIVERSAL qw(isa);
-
 use warnings;
 use strict;
 
