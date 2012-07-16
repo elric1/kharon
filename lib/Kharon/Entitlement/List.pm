@@ -23,7 +23,7 @@ sub new {
 			die "subobjects must be an ARRAY ref";
 		}
 
-		$self->set_subobjects(@{$args{handlers}});
+		$self->set_subobjects(@{$args{subobjects}});
 	}
 
 	return $self;
