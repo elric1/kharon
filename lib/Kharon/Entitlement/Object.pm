@@ -1,5 +1,5 @@
 #
-# Implement a ACL that takes an object and will invoke methods in it
+# Implement an ACL that takes an object and will invoke methods in it
 # to return the entitlement status.  Kharon::Entitlement::Object when
 # called will look for methods of the form KHARON_COMMON_ACL and
 # KHARON_ACL_<verb>.  It will first invoke KHARON_COMMON_ACL giving
