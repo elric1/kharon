@@ -3,6 +3,7 @@
 # architecture for "simple" entitlements checks.
 
 package Kharon::Entitlement;
+use base qw(Kharon);
 
 use strict;
 use warnings;

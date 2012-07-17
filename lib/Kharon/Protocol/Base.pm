@@ -3,6 +3,7 @@
 
 
 package Kharon::Protocol::Base;
+use base qw(Kharon);
 use Kharon::utils qw/get_next_word/;
 
 use warnings;

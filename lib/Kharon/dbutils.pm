@@ -3,6 +3,7 @@
 
 
 package Kharon::dbutils;
+use base qw(Kharon);
 
 use Exporter;
 @ISA = qw(Exporter);

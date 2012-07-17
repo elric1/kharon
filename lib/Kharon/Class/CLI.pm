@@ -1,6 +1,7 @@
 # Blame: "Roland C. Dowdeswell" <elric@imrryr.org>
 
 package Kharon::Class::CLI;
+use base qw(Kharon);
 
 use Kharon::utils qw/encode_var_list getclasshash getclassvar/;
 

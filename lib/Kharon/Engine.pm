@@ -4,6 +4,7 @@
 # Base class for ProtocolEngineServer and ProtocolEngine client.
 
 package Kharon::Engine;
+use base qw(Kharon);
 
 use IO::File;
 

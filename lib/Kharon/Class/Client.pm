@@ -1,6 +1,7 @@
 # Blame: "Roland C. Dowdeswell" <elric@imrryr.org>
 
 package Kharon::Class::Client;
+use base qw(Kharon);
 
 use Kharon::utils qw/getclassvar/;
 
