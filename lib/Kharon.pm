@@ -2,7 +2,7 @@ package Kharon;
 
 use version 0.77;
 
-our $VERSION = version->declare("v0.2");
+our $VERSION = version->declare("v0.3");
 
 use warnings;
 use strict;
