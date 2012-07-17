@@ -207,6 +207,10 @@ sub Run {
 
 	my @reflist;
 
+	if (defined($self->{acl})) {
+		$self->{acl}->set_opt('throw', 1);
+	}
+
 	my $remainder = '';
 	while (!$last) {
 		# Retrieve a line from the client
