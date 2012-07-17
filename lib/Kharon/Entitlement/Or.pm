@@ -13,17 +13,19 @@ sub check1 {
 	my ($self, @args) = @_;
 	my $subobjs = $self->{subobjects};
 	my $ret;
-	my @errs;
+	my %errs;
 
 	for my $obj (@$subobjs) {
-		$ret = $obj->check(@args);
+		eval { $ret = $obj->check(@args); };
 
 		return 1 if defined($ret) && $ret eq '1';
 
-		push(@errs, $ret) if defined($ret) && $ret ne '0';
+		$errs{$@->[1]} = 1	if $@;
 	}
 
-	return join(', ', @errs)	if @errs > 0;
+	delete $errs{"Permission denied."};
+
+	return join(', ', keys %errs)	if keys %errs > 0;
 	return 0;
 }
 

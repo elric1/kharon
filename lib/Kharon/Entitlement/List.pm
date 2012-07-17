@@ -51,10 +51,10 @@ sub set_subobjects {
 
 	$self->{subobjects} = \@subobjs;
 
-	# We don't want to catch errors...
+	# We want to catch errors...
 
 	for my $obj (@subobjs) {
-		$obj->set_opt('throw', 0);
+		$obj->set_opt('throw', 1);
 	}
 
 	$self->set_creds(@{$self->{credlist}});
