@@ -86,25 +86,44 @@ sub mk_scalar_methods {
 	$ret;
 }
 
+sub allparents {
+	my ($proto) = @_;
+	my @ret;
+
+	my $class = ref($proto) || $proto;
+
+	no strict "refs";
+	for my $c (@{"$class\::ISA"}) {
+		unshift(@ret, allparents($c));
+	}
+	use strict "refs";
+
+	unshift(@ret, $class);
+	return @ret;
+}
+
 sub getclassvar {
 	my ($obj, $var) = @_;
 	my @ret;
-
-	my $class = ref($obj);
 
 	#
 	# Find the array variable in $obj's class or one of its superclasses:
 
 	no strict "refs";
-	for my $c ($class, @{"$class\::ISA"}) {
+	for my $c (allparents($obj)) {
 		next if !exists(${"$c\::"}{$var});
 
-		@ret = @{"$c\::$var"};
+		push(@ret, @{"$c\::$var"});
 		last;
 	}
 	use strict "refs";
 
-	return @ret;
+	my %hash;
+	for my $v (@ret) {
+		$hash{$v} = 1;
+	}
+
+	return keys %hash;
 }
 
 #
