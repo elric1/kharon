@@ -8,7 +8,6 @@ use base qw(Kharon);
 use Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw{
-	getclasshash
 	getclassvar
 	get_next_word
 	get_next_var
@@ -106,27 +105,6 @@ sub getclassvar {
 	use strict "refs";
 
 	return @ret;
-}
-
-sub getclasshash {
-	my ($obj, $var) = @_;
-	my %ret;
-
-	my $class = ref($obj);
-
-	#
-	# Find the array variable in $obj's class or one of its superclasses:
-
-	no strict "refs";
-	for my $c ($class, @{"$class\::ISA"}) {
-		next if !exists(${"$c\::"}{$var});
-
-		%ret = %{"$c\::$var"};
-		last;
-	}
-	use strict "refs";
-
-	return %ret;
 }
 
 #

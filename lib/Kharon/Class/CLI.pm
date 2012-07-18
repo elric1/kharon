@@ -3,7 +3,7 @@
 package Kharon::Class::CLI;
 use base qw(Kharon);
 
-use Kharon::utils qw/encode_var_list getclasshash getclassvar/;
+use Kharon::utils qw/encode_var_list/;
 
 use UNIVERSAL qw/isa/;
 use POSIX qw/strftime/;
@@ -57,15 +57,15 @@ sub run_cmd {
 	my @ret;
 	my $func;
 
-	my %hcmds   = getclasshash($self, 'KHARON_HASHIFY_COMMANDS');
-	my %aliases = getclasshash($self, 'KHARON_COMMAND_ALIASES');
+	my $hcmds   = $self->KHARON_HASHIFY_COMMANDS();
+	my $aliases = $self->KHARON_COMMAND_ALIASES();
 
 	my $out		= $self->{out};
 	my $obj		= $self->{obj};
 	my $formats	= $self->{formats};
 	my $cmds	= $self->{cmds};
 
-	$cmd  = $aliases{$cmd}		if  exists($aliases{$cmd});
+	$cmd  = $aliases->{$cmd}	if  exists($aliases->{$cmd});
 	$func = $cmds->{$cmd}		if  exists($cmds->{$cmd});
 	$func = $obj->can($cmd)		if !defined($func);
 
@@ -74,8 +74,8 @@ sub run_cmd {
 		$obj  = $self;
 	}
 
-	if (exists($hcmds{$cmd})) {
-		@args = $self->hashify_args(@{$hcmds{$cmd}}, @args);
+	if (exists($hcmds->{$cmd})) {
+		@args = $self->hashify_args(@{$hcmds->{$cmd}}, @args);
 	}
 
 	if (!defined($func)) {
