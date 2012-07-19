@@ -88,7 +88,7 @@ sub check1 {
 	# This includes the case where the entitlement doesn't exist
 	# in the file at all.
 	if (!@groups) {
-		return 0;
+		return undef;
 	}
 
 	# Check to see if the wildcard special group "ALL" is one of
@@ -104,7 +104,7 @@ sub check1 {
 	}
 
 	# None of our creds matched any of the entitlements
-	return 0;
+	return undef;
 }
 
 1;

@@ -73,10 +73,12 @@ sub throw_eperm {
 #	$verb		Entitlement to check
 #	@predicate	The remaining arguments.
 #
-# The return value of check1 can be 0 meaning permission denied, 1
+# The return value of check1 can be undef meaning ``no comment''
+# (this will generally be converted into deny but is useful for
+# stacking entitlement objects), 0 meaning permission denied, 1
 # meaning allowed or a textual message which means permission denied
-# with the textual message being an error string.  You cannot have a
-# textual error string which is either 0 or 1.
+# with the textual message being an error string.  You cannot have
+# a textual error string which is either 0 or 1.
 #
 # XXXrcd: should we allow an object or reference to be returned which
 #         will simply be thrown if $self->{throw} is defined?
@@ -104,6 +106,8 @@ sub check {
 	my ($self, $verb, @predicate) = @_;
 
 	my $ret = $self->check1($verb, @predicate);
+
+	$ret = 0 if !defined($ret);
 
 	if ($ret ne '1' && $self->{throw}) {
 		if ($ret eq '0') {
