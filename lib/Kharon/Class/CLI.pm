@@ -323,4 +323,10 @@ sub print {
 	print $out @args;
 }
 
+#
+# provide empty methods:
+
+sub KHARON_HASHIFY_COMMANDS { return {}; }
+sub KHARON_COMMAND_ALIASES { return {}; }
+
 1;
