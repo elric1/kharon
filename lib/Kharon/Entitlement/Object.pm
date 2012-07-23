@@ -67,7 +67,7 @@ sub check1 {
 		return &$acl($subobj, $verb, @args);
 	}
 
-	return 0;
+	return undef;
 }
 
 1;
