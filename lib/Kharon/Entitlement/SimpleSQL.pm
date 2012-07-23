@@ -82,7 +82,7 @@ sub check1 {
 our %table_desc = (
 	pkey		=> undef,
 	uniq		=> [],
-	fields		=> [qw/subject verb/],
+	fields		=> [qw/verb subject/],
 	wontgrow	=> 1,
 );
 
