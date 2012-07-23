@@ -117,6 +117,14 @@ sub del {
 
 	sql_command($dbh, $stmt, $actor, $verb);
 
+	my $ret;
+	eval { $ret = $self->check($verb) };
+
+	if (!defined($ret) || $ret ne '1') {
+		$dbh->rollback();
+		die [503, "Cannot relinquish permissions."];
+	}
+
 	$dbh->commit();
 	return;
 }
