@@ -18,6 +18,7 @@ sub check1 {
 		eval { $ret = $obj->check1(@args); };
 
 		# XXXrcd: we should likely log this error...
+		print STDERR "$@" if $@;
 
 		return $ret if defined($ret);
 	}
