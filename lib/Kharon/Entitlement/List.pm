@@ -5,7 +5,7 @@
 package Kharon::Entitlement::List;
 use base qw(Kharon::Entitlement);
 
-use UNIVERSAL qw(isa);
+use Scalar::Util qw/blessed/;
 
 use warnings;
 use strict;
@@ -43,7 +43,7 @@ sub set_subobjects {
 	my ($self, @subobjs) = @_;
 
 	for my $obj (@subobjs) {
-		if (!UNIVERSAL::isa($obj, 'Kharon::Entitlement')) {
+		if (!blessed($obj) || !$obj->isa('Kharon::Entitlement')) {
 			die "Woah, bad subobject passed.  Must be a " .
 			    "Kharon::Entitlement";
 		}
