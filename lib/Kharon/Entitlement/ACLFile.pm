@@ -93,7 +93,7 @@ sub check1 {
 
 	# Check to see if the wildcard special group "ALL" is one of
 	# the groups.
-	if (grep(/^ALL$/, @groups)) {
+	if (grep($_ eq "ALL", @groups)) {
 		return 1;
 	}
 
