@@ -35,6 +35,12 @@ sub set_dbh {
 	$self->{dbh} = $dbh;
 }
 
+sub set_del_check {
+	my ($self, $check) = @_;
+
+	$self->{del_check} = $check;
+}
+
 sub init_db {
 	my ($self) = @_;
 	my $dbh = $self->{dbh};
@@ -112,17 +118,20 @@ sub del {
 	my ($self, $verb, $actor) = @_;
 	my $dbh = $self->{dbh};
 	my $table = $self->{table};
+	my $del_check = $self->{del_check};
 
 	my $stmt = "DELETE FROM $table WHERE subject = ? AND verb = ?";
 
 	sql_command($dbh, $stmt, $actor, $verb);
 
-	my $ret;
-	eval { $ret = $self->check($verb) };
+	if (defined($del_check)) {
+		my $ret;
+		eval { $ret = &$del_check($verb); };
 
-	if (!defined($ret) || $ret ne '1') {
-		$dbh->rollback();
-		die [503, "Cannot relinquish permissions."];
+		if (!defined($ret) || $ret ne '1') {
+			$dbh->rollback();
+			die [503, "Cannot relinquish permissions."];
+		}
 	}
 
 	$dbh->commit();
