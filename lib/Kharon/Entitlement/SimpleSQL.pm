@@ -60,6 +60,18 @@ sub init_db {
 	$dbh->{AutoCommit} = 0;
 }
 
+sub drop_db {
+	my ($self) = @_;
+	my $dbh = $self->{dbh};
+	my $table = $self->{table};
+
+	$dbh->{AutoCommit} = 1;
+
+	$dbh->do(qq{ DROP TABLE $table });
+
+	$dbh->{AutoCommit} = 0;
+}
+
 sub check1 {
 	my ($self, $verb) = @_;
 	my $dbh = $self->{dbh};
