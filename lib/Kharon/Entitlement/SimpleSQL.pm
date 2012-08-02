@@ -67,7 +67,7 @@ sub drop_db {
 
 	$dbh->{AutoCommit} = 1;
 
-	$dbh->do(qq{ DROP TABLE $table });
+	$dbh->do(qq{ DROP TABLE IF EXISTS $table });
 
 	$dbh->{AutoCommit} = 0;
 }
