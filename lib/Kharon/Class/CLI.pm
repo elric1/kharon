@@ -74,15 +74,16 @@ sub run_cmd {
 		$obj  = $self;
 	}
 
-	if (exists($hcmds->{$cmd})) {
-		@args = $self->hashify_args(@{$hcmds->{$cmd}}, @args);
-	}
-
 	if (!defined($func)) {
 		print STDERR "Unrecognised command, $cmd\n";
 		return 1;
 	}
-	eval { @ret = &$func($obj, @args); };
+	eval {
+		if (exists($hcmds->{$cmd})) {
+			@args = $self->hashify_args(@{$hcmds->{$cmd}}, @args);
+		}
+		@ret = &$func($obj, @args);
+	};
 
 	if ($@) {
 		$self->printerr($@);
