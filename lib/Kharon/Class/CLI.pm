@@ -153,6 +153,23 @@ sub run_cmdline {
 	return 0;
 }
 
+sub _parse_duration {
+	my ($str) = @_;
+
+	my @l = ($str =~ /(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s?)?/o);
+
+	@l = map { $_ //= 0; $_ =~ s/[a-z]$//o; $_; } @l;
+
+	my $ret	 = 0;
+	my @units = (0, 7, 24, 60, 60);
+	for my $val (@l) {
+		$ret *= shift(@units);
+		$ret += $val if defined($val);
+	}
+
+	return $ret;
+}
+
 sub hashify_args {
 	my ($self, $start, $hmap, @input) = @_;
 	my %hash;
@@ -180,6 +197,11 @@ sub hashify_args {
 
 		if (ref($hmap->{$key}) ne 'ARRAY' && length($op) != 1) {
 			die [503, "$op can only be used with list fields."];
+		}
+
+		if (defined($hmap->{$key}) && ref($hmap->{$key}) ne 'ARRAY' &&
+		    $hmap->{$key} eq 'duration') {
+			$val = _parse_duration($val);
 		}
 
 		if (ref($hmap->{$key}) eq 'ARRAY') {
