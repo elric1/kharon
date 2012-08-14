@@ -109,6 +109,10 @@ sub ReConnect {
 		setdefnoref($sv, qq{PeerAddr}, $in->[0]);
 	}
 
+	if (ref($in) eq '') {
+		setdefnoref($sv, qq{PeerAddr}, $in);
+	}
+
 	validate_server('ReConnect', $sv);
 
 	$self->Disconnect();
