@@ -296,7 +296,8 @@ sub RunObj {
 		die "RunObj: next_server not defined" if !defined($master);
 
 		for $cmd (@$refercmds) {
-			$handlers{$cmd} = sub { (301, 0, $master) };
+			$handlers{$cmd} = sub { (301, 0,
+			    { PeerAddr => $master }) };
 		}
 	} elsif (ref($refercmds) eq 'HASH') {
 		my %h = %$refercmds;
