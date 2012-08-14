@@ -233,7 +233,7 @@ sub encode_hash {
 
 # Kharon encode the supplied list as a complete protocol line
 sub encode_var_list {
-	join(" ", map { encode_var($_, '[ ]') } @_).chr(13).chr(10);
+	join(" ", map { encode_var($_, '[ ]') } @_).chr(10);
 }
 
 # XXXrcd: is emit still necessary??
