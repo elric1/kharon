@@ -1,8 +1,8 @@
 package Kharon;
 
-use version 0.77;
+use version;
 
-our $VERSION = version->declare("v0.3");
+our $VERSION = version->new("v0.3");
 
 use warnings;
 use strict;
@@ -12,11 +12,10 @@ sub VERSION {
 
 	return $VERSION	if !defined($required);
 
-	my $me  = version->parse($VERSION);
-	my $req = version->parse($required);
+	my $req = version->new($required);
 
-	if ($me < $req) {
-		die "Kharon version $req required--this is only version $me";
+	if ($VERSION < $req) {
+		die "Kharon version $req required--this is only version $VERSION";
 	}
 
 	return $VERSION;
