@@ -5,13 +5,15 @@ use strict;
 use warnings;
 
 sub check1 {
-	my ($self, $ent) = @_;
+	my ($self, @ents) = @_;
 
 	for my $cred (@{$self->{credlist}}) {
-		return 1 if $cred eq $ent;
+		for my $ent (@ents) {
+			return 1 if $ent eq $cred;
+		}
 	}
 
-	return 0;
+	return undef;
 }
 
 1;
