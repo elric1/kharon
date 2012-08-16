@@ -99,8 +99,10 @@ sub check1 {
 
 	# Otherwise, we see if our subobject considers it a match.
 
-	if ($subobject->check(@groups)) {
-		return 1;
+	for my $g (@groups) {
+		if ($subobject->check($g)) {
+			return 1;
+		}
 	}
 
 	# None of our creds matched any of the entitlements
