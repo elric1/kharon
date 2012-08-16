@@ -74,15 +74,16 @@ sub do_command {
 	my ($self, $opts, $handlers, $line) = @_;
 	my ($cmd, @args);
 	my $log = $self->{logger};
+	my $resp = $self->{resp};
 
 	# Get the command and args
 	eval {
-		my $ret = $self->{resp}->Unmarshall($line);
+		my $ret = $resp->Unmarshall($line);
 		($cmd, @args) = @$ret;
 	};
 	if ($@) {
 		$log->log('err', "Error parsing command: $@");
-		$self->Write($self->{resp}->Encode_Error(500,
+		$self->Write($resp->Encode_Error(500,
 		    "Error parsing command: $@"));
 		return 0;
 	}
@@ -95,14 +96,21 @@ sub do_command {
 	# Deal with the exit cmds up front:
 	if (exists($opts->{exitcmds}) &&
 	    grep { $cmd eq $_ } @{$opts->{exitcmds}}) {
-		eval { $self->Write($self->{resp}->Encode(220, 'bye')); };
+		eval { $self->Write($resp->Encode(220, 'bye')); };
 		return 1;
+	}
+
+	# And with our referrals:
+	my $refercmds = $opts->{refercmds};
+	if (defined($refercmds) && exists($refercmds->{$cmd})) {
+		eval { $self->Write($resp->Encode(301, $refercmds->{$cmd})) };
+		return 0;
 	}
 
 	# Bail if we don't have a handler...
 	if (!defined($handlers->{$cmd})) {
 		$log->cmd_log('err', 400, $cmd, @args);
-		$self->Write($self->{resp}->Encode_Error(400,
+		$self->Write($resp->Encode_Error(400,
 		    "No handler defined for command [$cmd]"));
 		return 0;
 	}
@@ -168,11 +176,11 @@ sub do_command {
 	# Use that response object to encode a list of
 	# lines to emit, and emit them.
 
-	eval { $self->Write($self->{resp}->Encode($code, @reflist)); };
+	eval { $self->Write($resp->Encode($code, @reflist)); };
 	if ($@) {
 		$code = 599;
 		(@reflist) = ($@);
-		$self->Write($self->{resp}->Encode($code, @reflist));
+		$self->Write($resp->Encode($code, @reflist));
 	}
 
 	$last;
@@ -295,19 +303,11 @@ sub RunObj {
 	if (ref($refercmds) eq 'ARRAY') {
 		die "RunObj: next_server not defined" if !defined($master);
 
-		for $cmd (@$refercmds) {
-			$handlers{$cmd} = sub { (301, 0,
-			    { PeerAddr => $master }) };
-		}
-	} elsif (ref($refercmds) eq 'HASH') {
-		my %h = %$refercmds;
+		$refercmds = {map { $_ => {PeerAddr=>$master} } @$refercmds};
+	};
 
-		for $cmd (keys %h) {
-			$handlers{$cmd} = sub { (301, 0, $h{$cmd}) };
-		}
-	}
-
-	$self->Run({exitcmds => $exitcmds}, \%handlers);
+	$self->Run({exitcmds => $exitcmds, refercmds => $refercmds},
+	    \%handlers);
 }
 
 sub RunKncAcceptor {
