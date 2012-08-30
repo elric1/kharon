@@ -4,6 +4,8 @@
 
 package Kharon::Log::Base;
 
+use Kharon::Protocol::ArrayHash;
+
 use Carp;
 
 use warnings;
@@ -41,9 +43,9 @@ sub cmd_log {
 
 	my $msg = "cmdresult|$code|$cmd|";
 
-	if (defined($args[0]) && ref($args[0]) eq '') {
-		$msg .= $args[0];
-	}
+	my $proto = Kharon::Protocol::ArrayHash->new();
+	$msg .= $proto->Marshall(\@args);
+
 	$self->log($level, $msg);
 }
 
