@@ -41,6 +41,12 @@ sub set_del_check {
 	$self->{del_check} = $check;
 }
 
+sub set_verbs {
+	my ($self, @verbs) = @_;
+
+	$self->{verbs} = \@verbs;
+}
+
 sub init_db {
 	my ($self) = @_;
 	my $dbh = $self->{dbh};
@@ -117,6 +123,11 @@ sub add {
 	my ($self, $verb, $actor) = @_;
 	my $dbh = $self->{dbh};
 	my $table = $self->{table};
+	my $verbs = $self->{verbs};
+
+	if (defined($verbs) && !grep {$_ eq $verb} @$verbs) {
+		die "Verb ``$verb'' not valid.";
+	}
 
 	my $stmt = "INSERT INTO $table(subject, verb) VALUES (?, ?)";
 
