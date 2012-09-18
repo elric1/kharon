@@ -48,11 +48,19 @@ sub set_verbs {
 }
 
 sub init_db {
-	my ($self) = @_;
+	my ($self, $fkeys) = @_;
 	my $dbh = $self->{dbh};
 	my $table = $self->{table};
 
 	$dbh->{AutoCommit} = 1;
+
+	my @fks;
+	@fks = @$fkeys	if defined($fkeys);
+
+	my $keys = join("\n\t\t\t", map
+	    { "FOREIGN KEY ($_->[0]) REFERENCES $_->[1]($_->[2])\n" .
+	      "\t\t\t\tON DELETE CASCADE" }
+	    @fks);
 
 	$dbh->do(qq{
 		CREATE TABLE $table (
@@ -60,6 +68,7 @@ sub init_db {
 			verb		VARCHAR,
 
 			PRIMARY KEY (subject, verb)
+			$keys
 		)
 	});
 
