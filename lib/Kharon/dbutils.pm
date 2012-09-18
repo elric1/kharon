@@ -274,7 +274,11 @@ sub generic_modify {
 	if (@setv) {
 		my $stmt = "UPDATE $table SET " . join(',', @setv) .
 		    " WHERE $key_field = ?";
-		sql_command($dbh, $stmt, @bindv, $target);
+		my $sth = sql_command($dbh, $stmt, @bindv, $target);
+
+		if ($sth->rows == 0) {
+			die [504, "$key_field not found in $table"];
+		}
 	}
 
 	for my $list_entry (@$lists) {
