@@ -1,4 +1,4 @@
-package Kharon::Log::Syslog;
+package Kharon::Log::Both;
 
 use base qw(Kharon::Log::Base);
 
