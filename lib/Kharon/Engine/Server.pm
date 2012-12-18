@@ -390,8 +390,7 @@ sub RunKncAcceptor {
 
 			undef($args{object});
 
-			undef($self->{in});
-			undef($self->{out});
+			$self->Disconnect();
 		}
 
 		undef($fh);
