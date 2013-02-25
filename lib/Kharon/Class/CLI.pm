@@ -292,7 +292,7 @@ sub fmtexpi {
 	$in -= time();
 
 	return "EXPIRED"	if $in < 1;
-	return fmtintv($in);
+	return $self->fmtintv($in);
 }
 
 sub formaterr {
