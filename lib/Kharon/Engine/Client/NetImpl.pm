@@ -150,8 +150,14 @@ sub Connect {
 		if (!defined($sock)) {
 			# Well, we didn't get a connexion, try the next
 			# one in the list...
+			my $errmsg = $!;
+			if ($errmsg && $@ && index($@, $errmsg) != -1) {
+				$errmsg = "";
+			}
+			$errmsg .= ", " if $errmsg && $@;
+			$errmsg .= $@ if $@;
 			push(@errs, "connect to " . fmtsrv($hr) .
-			    " failed: $!");
+			    " failed: $errmsg");
 			next;
 		}
 
@@ -177,7 +183,7 @@ sub Connect {
 	}
 
 	throw Kharon::PermanentError("Cannot connect: " .
-	    join(',', @errs), 500);
+	    join('; ', @errs), 500);
 }
 
 sub Disconnect {

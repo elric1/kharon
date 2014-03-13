@@ -19,12 +19,25 @@ use strict;
 sub Connect {
 	my $self = shift;
 	my $logger = $self->{logger};
+	my @errs;
 
 	foreach my $hr (@_) {
 		$logger->log('debug', "connect attempt: $hr");
 
 		my $sock = IO::Socket::UNIX->new($hr);
-		next if !defined($sock);
+		if (!defined($sock)) {
+			# Well, we didn't get a connexion, try the next
+			# one in the list...
+			my $errmsg = $!;
+			if ($errmsg && $@ && index($@, $errmsg) != -1) {
+				$errmsg = "";
+			}
+			$errmsg .= ", " if $errmsg && $@;
+			$errmsg .= $@ if $@;
+			push(@errs, "connect to " . $hr .
+			    " failed: $errmsg");
+			next;
+		}
 
 		$self->{in} = $self->{out} = $sock;
 		$self->{connexion} = $hr;
@@ -41,7 +54,8 @@ sub Connect {
 		$logger->log('err', "$@") if $@;
 	}
 
-	throw Kharon::PermanentError("Cannot connect", 500);
+	throw Kharon::PermanentError("Cannot connect: " .
+	    join('; ', @errs), 500);
 }
 
 1;
