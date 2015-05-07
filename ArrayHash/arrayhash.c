@@ -556,13 +556,13 @@ state_smtplike(struct self *self, int c)
 	D(fprintf(stderr, "state_smtplike code=%d got '%c'\n", code, c));
 
 	if (code < 1000 && c >= '0' && c <= '9') {
+		code *= 10;
+		code += c - '0';
+
 		if (code > 999) {
 			self->done = BAD;
 			return;
 		}
-
-		code *= 10;
-		code += c - '0';
 
 		stack_set_code(st, code);
 		return;
