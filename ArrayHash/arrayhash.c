@@ -580,6 +580,7 @@ state_smtplike(struct self *self, int c)
 	case '.':
 		if (code < 1000)
 			self->done = 1;
+		/*FALLTHROUGH*/
 
 	case '-':
 		if (code < 100) {
