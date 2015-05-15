@@ -6,6 +6,9 @@
 
 #include <Python.h>
 
+void		pyarrayhash_delete(PyObject *);
+PyMODINIT_FUNC	initpyarrayhash(void);
+
 #define MAX_ENCODED 16384
 
 void
