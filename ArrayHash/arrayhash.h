@@ -3,6 +3,8 @@
 #ifndef KHARON_ARRAYHASH_INCLUDE
 #define KHARON_ARRAYHASH_INCLUDE
 
+#include <stddef.h>
+
 // #define DEBUG 1
 #if DEBUG
 #define D(x)	do { if (DEBUG) x; } while (0)
@@ -92,9 +94,9 @@ struct entry {
 ST_DECLARE(struct stack, struct entry);
 
 struct parse {
-	char		*input;
+	const char	*input;
 	int		 inlen;
-	char		*pos;
+	const char	*pos;
 	int		 remnant;
 	int		 lexstate;
 #define LEX_NORMAL		0x0000
@@ -132,5 +134,5 @@ void		 parse_free(struct self *self);
 
 struct encode_state	*encode_init(void *, int);
 struct encode_state	*marshall_init(void *);
-int			 encode(struct encode_state **, char *, int);
+int			 encode(struct encode_state **, char *, size_t);
 #endif

@@ -46,21 +46,21 @@ ST_DECLARE(struct encode_state, struct enc_entry);
 
 struct encode_state *marshall_init(void *);
 struct encode_state *encode_init(void *, int);
-int encode(struct encode_state **, char *, int);
+int encode(struct encode_state **, char *, size_t);
 void encode_free(struct encode_state **);
-int parse_append(struct self *, char *, int);
+int parse_append(struct self *, const char *, size_t);
 void parse_reset(struct self *);
-int unmarshall(struct self *, char *, int);
+int unmarshall(struct self *, const char *, size_t);
 
 void encode_push(struct encode_state **, int, void *);
 void encode_push_c(struct encode_state **, int, char);
 void encode_pop(struct encode_state **);
-void encode_undef(struct encode_state **, char *, int *, int);
-void encode_list(struct encode_state **, char *, int *, int);
-void encode_map(struct encode_state **, char *, int *, int);
-void encode_char(struct encode_state **, char *, int *, int);
-void encode_var(struct encode_state **, char *, int *, int);
-void encode_scalar(struct encode_state **, char *, int *, int);
+void encode_undef(struct encode_state **, char *, size_t *, size_t);
+void encode_list(struct encode_state **, char *, size_t *, size_t);
+void encode_map(struct encode_state **, char *, size_t *, size_t);
+void encode_char(struct encode_state **, char *, size_t *, size_t);
+void encode_var(struct encode_state **, char *, size_t *, size_t);
+void encode_scalar(struct encode_state **, char *, size_t *, size_t);
 
 int parse(struct self *);
 void state_done(struct parse *, struct stack **, int);
@@ -99,7 +99,7 @@ encode_pop(struct encode_state **st)
 }
 
 void
-encode_undef(struct encode_state **st, char *ret, int *pos, int len)
+encode_undef(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
 	D(fprintf(stderr, "encode_undef, enter\n"));
@@ -108,7 +108,7 @@ encode_undef(struct encode_state **st, char *ret, int *pos, int len)
 }
 
 void
-encode_list(struct encode_state **st, char *ret, int *pos, int len)
+encode_list(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	void	*tmp;
 	int	 ctx;
@@ -156,7 +156,7 @@ encode_list(struct encode_state **st, char *ret, int *pos, int len)
 }
 
 void
-encode_map(struct encode_state **st, char *ret, int *pos, int len)
+encode_map(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	void	*key;
 	void	*val;
@@ -184,7 +184,7 @@ encode_map(struct encode_state **st, char *ret, int *pos, int len)
 }
 
 void
-encode_char(struct encode_state **st, char *ret, int *pos, int len)
+encode_char(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
 	D(fprintf(stderr, "encode_char, enter\n"));
@@ -193,7 +193,7 @@ encode_char(struct encode_state **st, char *ret, int *pos, int len)
 }
 
 void
-encode_var(struct encode_state **st, char *ret, int *pos, int len)
+encode_var(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
 	D(fprintf(stderr, "encode_var, enter\n"));
@@ -202,7 +202,7 @@ encode_var(struct encode_state **st, char *ret, int *pos, int len)
 }
 
 void
-encode_scalar(struct encode_state **st, char *ret, int *pos, int len)
+encode_scalar(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	unsigned char	*str;
 	int		 ctx;
@@ -321,14 +321,14 @@ encode_init(void *data, int ctx)
 }
 
 int
-encode(struct encode_state **st, char *ret, int len)
+encode(struct encode_state **st, char *ret, size_t len)
 {
-	int	 pos;
+	size_t	 pos;
 
 	D(fprintf(stderr, "encode, enter\n"));
 	for (pos=0; pos < len;) {
-		D(fprintf(stderr, "encode, loop pos=%d\n", pos));
-		D(fprintf(stderr, "encode, loop ret=%.*s\n", pos, ret));
+		D(fprintf(stderr, "encode, loop pos=%zu\n", pos));
+		D(fprintf(stderr, "encode, loop ret=%.*s\n", (int)pos, ret));
 
 		switch (ST_ENTRY(st).state & STATE_BITMASK) {
 		case STATE_VAR:	     encode_var(st, ret, &pos, len);    break;
@@ -684,7 +684,7 @@ state_scalar(struct parse *p, struct stack **st, int c)
 {
 	ssp_val		*ret;
 	char		 buf[STR_BUF_LEN] = "";
-	char		*start;
+	const char	*start;
 	int		 i;
 
 	ret = stack_get_ssp_val(st);
@@ -941,7 +941,7 @@ parse_free(struct self *self)
 }
 
 int
-parse_append(struct self *self, char *input, int len)
+parse_append(struct self *self, const char *input, size_t len)
 {
 	struct parse	 *p;
 	struct stack	**st;
@@ -976,7 +976,7 @@ parse_append(struct self *self, char *input, int len)
 }
 
 int
-unmarshall(struct self *self, char *input, int len)
+unmarshall(struct self *self, const char *input, size_t len)
 {
 	struct parse	 *p;
 	struct stack	**st;

@@ -144,7 +144,7 @@ string_begin(ssp_val *ret)
 }
 
 KHARON_DECL void
-string_append(ssp_val *ret, char *str, int len)
+string_append(ssp_val *ret, const char *str, int len)
 {
 
 	if (!*ret) {
