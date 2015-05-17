@@ -34,7 +34,7 @@ struct {
 struct enc_entry {
 	int			 state;
 	int			 first;
-	int			 pos;
+	size_t			 pos;
 	union enc_entry_union {
 		void		*data;
 		char		 c;
@@ -206,8 +206,8 @@ encode_scalar(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	unsigned char	*str;
 	int		 ctx;
-	int		 str_len;
-	int		 i;
+	size_t		 str_len;
+	size_t		 i;
 	int		 intercharpos;
 
 	D(fprintf(stderr, "encode_scalar, enter\n"));
