@@ -18,4 +18,4 @@ eval {
 	Kharon::Test::ParseSpeed::run_test();
 };
 
-if ($@) { print encode_var($@) };
+if ($@) { print encode_var($@); exit(1); };
