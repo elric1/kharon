@@ -1,12 +1,16 @@
 ArrayHash/ArrayHash.bs
 ArrayHash/ArrayHash.c
 ArrayHash/ArrayHash.o
+ArrayHash/MYMETA.json
 ArrayHash/MYMETA.yml
 ArrayHash/Makefile
 ArrayHash/Makefile.old
 ArrayHash/pm_to_blib
+MYMETA.json
 MYMETA.yml
 Makefile
 Makefile.old
 blib/
 pm_to_blib
+
+python/build/
