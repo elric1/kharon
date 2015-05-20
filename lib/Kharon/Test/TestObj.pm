@@ -31,13 +31,17 @@ sub complicated {
 
 sub uniq {
 	my ($self, @args) = @_;
-
+	my @ret;
 	my %h;
+
 	for my $i (@args) {
-		$h{$i} = 1;
+		if (!exists($h{$i})) {
+			push(@ret, $i);
+			$h{$i} = 1;
+		}
 	}
 
-	keys %h;
+	return @ret;
 }
 
 sub encapsulate {
