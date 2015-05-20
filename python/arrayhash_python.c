@@ -34,7 +34,7 @@ encode_get_type(void *data)
 }
 
 KHARON_DECL char *
-encode_get_scalar(void *data, int *len)
+encode_get_scalar(void *data, size_t *len)
 {
 	char		*ret;
 	PyObject	*m = data;

@@ -685,7 +685,7 @@ state_scalar(struct parse *p, struct stack **st, int c)
 	ssp_val		*ret;
 	char		 buf[STR_BUF_LEN] = "";
 	const char	*start;
-	int		 i;
+	size_t		 i;
 
 	ret = stack_get_ssp_val(st);
 
@@ -710,7 +710,7 @@ state_scalar(struct parse *p, struct stack **st, int c)
 
 	/* Now for the meat of the function. */
 
-	for (i=0; i < (int) sizeof(buf); i++) {
+	for (i=0; i < sizeof(buf); i++) {
 		if (chr_matches_ctx(st, c) || c == EOL) {
 			break;
 		}
@@ -723,8 +723,8 @@ state_scalar(struct parse *p, struct stack **st, int c)
 	}
 
 	if (i > 0) {
-		D(fprintf(stderr, "state_scalar: end got: '%*s', %d\n", i,
-		    buf, i));
+		D(fprintf(stderr, "state_scalar: end got: '%*s', %zu\n",
+		    (int)i, buf, i));
 		string_append(ret, buf, i);
 	}
 

@@ -144,18 +144,18 @@ string_begin(ssp_val *ret)
 }
 
 KHARON_DECL void
-string_append(ssp_val *ret, const char *str, int len)
+string_append(ssp_val *ret, const char *str, size_t len)
 {
 
 	if (!*ret) {
 		*ret = newSVpvn(str, len);
-		D(fprintf(stderr, "string_append(%p): '%s', %d\n", *ret,
+		D(fprintf(stderr, "string_append(%p): '%s', %zu\n", *ret,
 		    str, len));
 		return;
 	}
 
 	sv_catpvn(*ret, str, len);
-	D(fprintf(stderr, "string_append(%p): '%s', %d\n", *ret,
+	D(fprintf(stderr, "string_append(%p): '%s', %zu\n", *ret,
 	    str, len));
 }
 
