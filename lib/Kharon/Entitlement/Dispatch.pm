@@ -9,8 +9,6 @@
 package Kharon::Entitlement::Dispatch;
 use base qw(Kharon::Entitlement);
 
-use UNIVERSAL qw( isa );
-
 use IO::File;
 
 use Kharon::utils;
@@ -69,7 +67,7 @@ sub check1 {
 		}
 	}
 
-	if (UNIVERSAL::isa($handler, 'Kharon::Entitlement')) {
+	if ($handler->isa('Kharon::Entitlement')) {
 		if ($handler->check($subent)) {
 			return 1;
 		}
@@ -86,7 +84,7 @@ sub set_creds {
 	for my $scheme (keys %$handlers) {
 		my $handler = $handlers->{$scheme};
 
-		if (UNIVERSAL::isa($handler, 'Kharon::Entitlement')) {
+		if ($handler->isa('Kharon::Entitlement')) {
 			$handler->set_creds(@creds);
 		}
 	}
@@ -100,17 +98,14 @@ sub register_handler {
 	my ($self, $scheme, $handler) = @_;
 	my $handlers = $self->{handlers};
 
-	if (ref($handler) ne 'CODE' &&
-	    !UNIVERSAL::isa($handler, 'Kharon::Entitlement')) {
+	if (ref($handler) ne 'CODE' && !$handler->isa('Kharon::Entitlement')) {
 		die "Woah, bad handler type.  Gotta be a code ref or an " .
 		    "Kharon::Entitlement";
 	}
 
 	$handlers->{$scheme} = $handler;
 
-	if (UNIVERSAL::isa($handler, 'Kharon::Entitlement')) {
-		$handler->set_creds(@{$self->{credlist}});
-	}
+	$handler->set_creds(@{$self->{credlist}});
 }
 
 #
