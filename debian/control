@@ -1,14 +1,23 @@
-Source: libkharon-perl
-Section: perl
+Source: libkharon
+Section: unknown
 Priority: optional
-Build-Depends: debhelper (>= 7), perl
+Build-Depends: debhelper (>= 7), perl, python, python2.7-dev
 Maintainer: elric <elric@imrryr.org>
 Standards-Version: 3.8.3
 Homepage: http://search.cpan.org/dist/Kharon/
+X-Python-Version: 2.7
 
 Package: libkharon-perl
 Architecture: any
 Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}, liberror-perl
+Description: a client/server application development framework
+ a client/server application development framework
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: libkharon-python
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python2.7
 Description: a client/server application development framework
  a client/server application development framework
  .
