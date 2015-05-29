@@ -1,3 +1,15 @@
+libkharon (0.4.0) unstable; urgency=low
+
+  * Add initial python bindings.
+
+  * Fixed tests by removing assumption that keys %foo has stable ordering.
+
+  * Pulling directly from UNIVERSAL is deprecated, so stop.
+
+  * code cleanup: s/int/size_t/, constify, style.
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Fri, 29 May 2015 14:30:00 +0500
+
 libkharon-perl (0.03-1) unstable; urgency=low
 
   * Bump the version

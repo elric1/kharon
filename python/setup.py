@@ -5,7 +5,7 @@ incdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..",
                                        "ArrayHash"))
 
 setup(name='kharon',
-      version='0.5',
+      version='0.4',
       packages = ['kharon',],
       ext_modules=[
                    Extension('kharon.pyarrayhash',
