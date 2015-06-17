@@ -88,10 +88,9 @@ class KharonCallable:
             if res == None:
                 break
 
-            if len(res) != 0:
-                obj = parser(res)
-                if obj:
-                    return (parser.code(), obj)
+            obj = parser(res)
+            if obj != None:
+                return (parser.code(), obj)
 
         raise ParseError("Response too short")
 
