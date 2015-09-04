@@ -31,7 +31,7 @@ sub firstkey {
 
 	for my $hr (@hrs) {
 		return $hr		if ref($hr) eq '';
-		return $hr->{$key}	if defined($hr->{key});
+		return $hr->{$key}	if defined($hr->{$key});
 	}
 }
 
