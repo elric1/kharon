@@ -943,7 +943,6 @@ parse_free(struct self *self)
 int
 parse_append(struct self *self, const char *input, size_t len)
 {
-	struct parse	 *p;
 	struct stack	**st;
 
 	/* XXXrcd: LAME, rewrite */
@@ -953,7 +952,6 @@ parse_append(struct self *self, const char *input, size_t len)
 	self->p.pos   = self->p.input;
 
 	st = &self->st;
-	p  = &self->p;
 
 	if (ST_IS_EMPTY(st)) {
 		D(fprintf(stderr, "Stack is empty, let's go...\n"));
@@ -978,7 +976,6 @@ parse_append(struct self *self, const char *input, size_t len)
 int
 unmarshall(struct self *self, const char *input, size_t len)
 {
-	struct parse	 *p;
 	struct stack	**st;
 
 	/* XXXrcd: LAME, rewrite */
@@ -992,7 +989,6 @@ unmarshall(struct self *self, const char *input, size_t len)
 	self->p.pos   = self->p.input;
 
 	st = &self->st;
-	p  = &self->p;
 
 	if (ST_IS_EMPTY(st)) {
 		D(fprintf(stderr, "Stack is empty, let's go...\n"));
