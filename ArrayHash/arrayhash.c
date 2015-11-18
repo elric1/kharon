@@ -354,6 +354,38 @@ encode_free(struct encode_state **st)
 	/* XXXrcd: !!! */
 }
 
+static const char *
+state_str(int state)
+{
+
+	switch (state & STATE_BITMASK) {
+	case STATE_SMTPLIKE:
+		return "smtplike";
+	case STATE_TOKENISE:
+		return "tokenise";
+	case STATE_VAR:
+		return "var";
+	case STATE_SCALAR:
+		return "scalar";
+	case STATE_LIST:
+		return "list";
+	case STATE_MAP_KEY:
+		return "map_key";
+	case STATE_MAP_VAL:
+		return "map_val";
+	case STATE_SPLIST:
+		return "splist";
+	case STATE_CHAR:
+		return "char";
+	case STATE_MAP:
+		return "map";
+	case STATE_UNDEF:
+		return "undef";
+	default:
+		return "unknown";
+	}
+}
+
 static inline int
 stack_get_code(struct stack **st)
 {
@@ -702,8 +734,8 @@ state_scalar(struct parse *p, struct stack **st, int c)
 			c = get_next_lex(p);
 
 		if (i > 0) {
-			D(fprintf(stderr, "state_scalar: END got: '%s', %d\n",
-			    start, i));
+			D(fprintf(stderr, "state_scalar: END got: '%.*s', "
+			    "%zu\n", (int)i, start, i));
 			string_append(ret, start, i);
 		}
 	}
@@ -723,7 +755,7 @@ state_scalar(struct parse *p, struct stack **st, int c)
 	}
 
 	if (i > 0) {
-		D(fprintf(stderr, "state_scalar: end got: '%*s', %zu\n",
+		D(fprintf(stderr, "state_scalar: end got: '%.*s', %zu\n",
 		    (int)i, buf, i));
 		string_append(ret, buf, i);
 	}
@@ -753,11 +785,11 @@ state_done(struct parse *p, struct stack **st, int c)
 	val      = stack_get_ssp_val(st);
 	oldstate = stack_get_state(st);
 	pop(st);
-	D(fprintf(stderr, "state_done, oldstate = %x\n", oldstate));
+	D(fprintf(stderr, "state_done, oldstate = %s\n", state_str(oldstate)));
 
 	ret   = stack_get_ssp_val(st);
 	state = stack_get_state(st);
-	D(fprintf(stderr, "state_done, understate = %x\n", state));
+	D(fprintf(stderr, "state_done, understate = %s\n", state_str(state)));
 
 	if (!*val && state != STATE_LIST && state != STATE_MAP_KEY)
 		string_end(val);
@@ -948,7 +980,7 @@ parse_append(struct self *self, const char *input, size_t len)
 	/* XXXrcd: LAME, rewrite */
 
 	self->p.input = input;
-	self->p.inlen = strlen(self->p.input);
+	self->p.inlen = len;
 	self->p.pos   = self->p.input;
 
 	st = &self->st;
@@ -1035,12 +1067,13 @@ parse(struct self *self)
 			return BAD;
 
 		state = stack_get_state(st);
-		D(fprintf(stderr, "loop got '%s' in state = %x\n",
-		    char_from(c), state));
+		D(fprintf(stderr, "loop got '%s' in state = %s\n",
+		    char_from(c), state_str(state)));
 
 		switch (c) {
 		case EOL:
-			D(fprintf(stderr, "EOL: state = %x\n", state));
+			D(fprintf(stderr, "EOL: state = %s\n",
+			    state_str(state)));
 			/* We should just continue later... */
 			return 0;
 
@@ -1049,8 +1082,8 @@ parse(struct self *self)
 			/* XXXrcd: hmmm, if we're already in STATE_SMTPLIKE? */
 			/* How about EOL? */
 			if (self->done == 1) {
-				D(fprintf(stderr, "we're done: state=0x%x\n",
-				    state));
+				D(fprintf(stderr, "we're done: state=s\n",
+				    state_str(state)));
 				if (state == STATE_SCALAR)
 					stack_set_flags(st, STATE_DONE);
 

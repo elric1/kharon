@@ -149,14 +149,14 @@ string_append(ssp_val *ret, const char *str, size_t len)
 
 	if (!*ret) {
 		*ret = newSVpvn(str, len);
-		D(fprintf(stderr, "string_append(%p): '%s', %zu\n", *ret,
-		    str, len));
+		D(fprintf(stderr, "string_append(%p): '%.*s', %zu\n", *ret,
+		    (int)len, str, len));
 		return;
 	}
 
 	sv_catpvn(*ret, str, len);
-	D(fprintf(stderr, "string_append(%p): '%s', %zu\n", *ret,
-	    str, len));
+	D(fprintf(stderr, "string_append(%p): '%.*s', %zu\n", *ret,
+	    (int)len, str, len));
 }
 
 KHARON_DECL void
