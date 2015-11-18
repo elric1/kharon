@@ -17,7 +17,7 @@ Description: a client/server application development framework
 
 Package: libkharon-python
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python2.7
+Depends: ${shlibs:Depends}, ${misc:Depends}, python2.7, python-libknc
 Description: a client/server application development framework
  a client/server application development framework
  .
