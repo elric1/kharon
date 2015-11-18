@@ -1104,7 +1104,13 @@ parse(struct self *self)
 				list_end(ret);
 				return 0;
 			} else {
-				if (state != STATE_SMTPLIKE) {
+				switch (state) {
+				case STATE_SMTPLIKE:
+					break;
+				case STATE_SCALAR:
+					state_scalar(p, st, c);
+					/*FALLTHROUGH*/
+				default:
 					push(st);
 					stack_set_state(st, STATE_SMTPLIKE);
 				}
