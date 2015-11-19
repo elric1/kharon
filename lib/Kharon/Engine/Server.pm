@@ -38,6 +38,13 @@ sub set_acl {
 	return;
 }
 
+sub set_iv {
+	my ($self, $iv) = @_;
+
+	$self->{iv} = $iv;
+	return;
+}
+
 #
 # XXXrcd: we're not doing this for now!  I haven't decided if this is in
 #         fact a good idea...  I got rid of the $end passing in all of the
@@ -124,13 +131,24 @@ sub do_command {
 	my $last = 0;
 	my @reflist;
 
+	# Perform input validation:
+	my $err = 0;
+	my @new_args = @args;
+	if (defined($self->{iv})) {
+		my @new_args2;
+
+		eval { @new_args2 = $self->{iv}->validate($cmd, @args); };
+		$err = $@ if $@;
+ 
+		@new_args = @new_args2	if @new_args2 > 0;
+	}
+
 	# Check ACLs if they're defined:
-	my $err;
-	if (defined($self->{acl})) {
+	if (!$err && defined($self->{acl})) {
 		my $perm;
 
-		eval { $perm = $self->{acl}->check($cmd, @args); };
-		$err = $@;
+		eval { $perm = $self->{acl}->check($cmd, @new_args); };
+		$err = $@ if $@;
  
 		if (!$err && $perm != 1) {
 			throw Kharon::PermanentError("ACL object must be " .
@@ -138,10 +156,10 @@ sub do_command {
 		}
 	}
 
-	my $func = $handlers->{$cmd};
-
 	if (!$err) {
-		eval { ($code, $last, @reflist) = &$func($cmd, @args); };
+		my $func = $handlers->{$cmd};
+
+		eval { ($code, $last, @reflist) = &$func($cmd, @new_args); };
 		$err = $@ if $@;
 	}
 

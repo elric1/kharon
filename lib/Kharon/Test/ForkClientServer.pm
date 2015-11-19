@@ -70,6 +70,28 @@ sub run_test {
 	do_both($local, $remote, 'encapsulate', [{a=>[\%h]}]);
 
 	print "\n";
+
+	#
+	# Test the input validation:
+
+	my $hr = {1=>2,3=>4};
+
+	my $res = $remote->takes_one_hashref($hr);
+	compare_hash($hr, $res);
+
+	# These should fail:
+
+	eval { $remote->takes_one_hashref() };
+	die "IV#1 failed"	if (!$@ || $@ ne "Too few args\n");
+	eval { $remote->takes_one_hashref(1) };
+	die "IV#2 failed"	if (!$@ || $@ ne "Not a hashref\n");
+	eval { $remote->takes_one_hashref("foo") };
+	die "IV#3 failed"	if (!$@ || $@ ne "Not a hashref\n");
+	eval { $remote->takes_one_hashref($hr, $hr) };
+	die "IV#4 failed"	if (!$@ || $@ ne "Too many args\n");
+
+	#
+	# Reaping and so on:
  
 	my $kid = $remote->{kid};
 	my $default_autoreap = $remote->{pec}->{autoreap};

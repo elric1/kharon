@@ -60,4 +60,20 @@ sub retnothing {
 	return;
 }
 
+sub KHARON_IV_takes_one_hashref {
+	my ($self, $cmd, @args) = @_;
+
+	die "Too few args\n"	if @args < 1;
+	die "Too many args\n"	if @args > 1;
+	die "Not a hashref\n"	if ref($args[0]) ne 'HASH';
+
+	return ();
+}
+
+sub takes_one_hashref {
+	my ($self, @args) = @_;
+
+	return @args;
+}
+
 1;

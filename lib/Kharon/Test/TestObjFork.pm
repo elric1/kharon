@@ -1,5 +1,6 @@
 package Kharon::Test::TestObjFork;
 
+use Kharon::InputValidation::Object;
 use Kharon::Protocol::ArrayHash;
 use Kharon::Engine::Server;
 use Kharon::Engine::Client::Fork;
@@ -21,12 +22,15 @@ sub run_daemon {
 	my $obj = Kharon::Test::TestObj->new();
 	my $ahr = Kharon::Protocol::ArrayHash->new(banner => {version=>'2.0'});
 	my $pes = Kharon::Engine::Server->new(protocols => [ $ahr ]);
+	my $iv  = Kharon::InputValidation::Object->new(subobject => $obj);
+
+	$pes->set_iv($iv);
 	$pes->Connect();
 
 	$pes->RunObj(
 		object => $obj,
 		cmds => [ qw/inc query exception complicated uniq encapsulate
-			     retnothing/ ]
+			     retnothing takes_one_hashref/ ]
 	);
 	exit(0);
 }
@@ -49,7 +53,7 @@ sub new {
 }
 
 eval mk_scalar_methods('Kharon::Test::TestObj',
-    qw/inc query exception retnothing/);
+    qw/inc query exception retnothing takes_one_hashref/);
 eval mk_array_methods('Kharon::Test::TestObj',
     qw/complicated uniq encapsulate/);
 
