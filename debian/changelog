@@ -1,3 +1,18 @@
+libkharon (0.5.0) unstable; urgency=low
+
+  * Add a basic input validation framework (with tests).
+  * Report more complete error detail
+  * Fix one more UNIVERSAL import
+  * Handle variable Perl install path
+  * ArrayHash C: fix parser bug when dealing with broken CRLFs on split packets.
+  * ArrayHash C: improve debugging output of the parser.
+  * ArrayHash C: Remove a couple of C compiler warnings.
+  * Kharon::Engine::Client::NetImpl: fix typo which broke client timeout parms.
+  * python/kharon/client.py: fixed void response bug.
+  * Record python-libknc dependency
+
+ -- Viktor Dukhovni <viktor@twosigma.com>  Fri, 20 Nov 2015 23:18:59 +0000
+
 libkharon (0.4.0) unstable; urgency=low
 
   * Add initial python bindings.
