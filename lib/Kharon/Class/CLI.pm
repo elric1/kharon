@@ -5,7 +5,6 @@ use base qw(Kharon);
 
 use Kharon::utils qw/encode_var_list/;
 
-use UNIVERSAL qw/isa/;
 use POSIX qw/strftime/;
 use Getopt::Std;		# XXXrcd: necessary?
 use Term::ReadLine;		# XXXrcd: necessary?
@@ -307,7 +306,7 @@ sub formaterr {
 		return sprintf("ERROR: %s\n", $err);
 	}
 
-	if (isa($err, 'Error')) {
+	if (UNIVERSAL::isa($err, 'Error')) {
 		return $err->stringify();
 	}
 
