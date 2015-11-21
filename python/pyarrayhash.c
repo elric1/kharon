@@ -119,8 +119,6 @@ static PyMethodDef PyArrayHashMethods[] = {
 PyMODINIT_FUNC
 initpyarrayhash(void)
 {
-	PyObject	*m;
-
-	m = Py_InitModule3("pyarrayhash", PyArrayHashMethods,
-	    "Wrap the parser for kharon");
+	(void) Py_InitModule3("pyarrayhash", PyArrayHashMethods,
+			      "Wrap the parser for kharon");
 }

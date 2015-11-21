@@ -354,6 +354,7 @@ encode_free(struct encode_state **st)
 	/* XXXrcd: !!! */
 }
 
+#if DEBUG
 static const char *
 state_str(int state)
 {
@@ -385,6 +386,7 @@ state_str(int state)
 		return "unknown";
 	}
 }
+#endif
 
 static inline int
 stack_get_code(struct stack **st)
@@ -774,7 +776,6 @@ state_done(struct parse *p, struct stack **st, int c)
 	ssp_val		 *val;
 	ssp_val		  tmp;
 	int		  state;
-	int		  oldstate;
 
 	/*
 	 * XXXrcd: Hmmm, I've just removed string_end() from the end of
@@ -783,9 +784,9 @@ state_done(struct parse *p, struct stack **st, int c)
 
 	/* XXXrcd: Hmmm... is val valid when we pop?  maybe not... */
 	val      = stack_get_ssp_val(st);
-	oldstate = stack_get_state(st);
+	D(fprintf(stderr, "state_done, oldstate = %s\n",
+		  state_str(stack_get_state(st))));
 	pop(st);
-	D(fprintf(stderr, "state_done, oldstate = %s\n", state_str(oldstate)));
 
 	ret   = stack_get_ssp_val(st);
 	state = stack_get_state(st);
