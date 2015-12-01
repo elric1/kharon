@@ -1,12 +1,9 @@
 #
-# Implement an ACL that takes an object and will invoke methods in it
-# to return the entitlement status.  Kharon::Entitlement::Object when
-# called will look for methods of the form KHARON_COMMON_ACL and
-# KHARON_ACL_<verb>.  It will first invoke KHARON_COMMON_ACL giving
-# it the arguments ($verb, @args).  If this returns a defined value,
-# it will be used as the entitlement status.  If not, then it will
-# invoke KHARON_ACL_<verb> in the same way.  If this is not found,
-# then it will return 0 (Permission denied).
+# Implement an Kharon::InputValidation that takes an object and will invoke
+# methods in it to validate the input.  Kharon::InputValidation::Object
+# when called will look for methods of the form KHARON_IV_<verb>.  They
+# are expected to have the same input and output as any validate method
+# in the Kharon::InputValidation framework.
 
 package Kharon::InputValidation::Object;
 use base qw(Kharon::InputValidation);
@@ -41,7 +38,7 @@ sub validate {
 		return &$f($subobj, $verb, @args);
 	}
 
-	return ();
+	return undef;
 }
 
 1;

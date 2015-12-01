@@ -135,12 +135,12 @@ sub do_command {
 	my $err = 0;
 	my @new_args = @args;
 	if (defined($self->{iv})) {
-		my @new_args2;
+		my $new_args2;
 
-		eval { @new_args2 = $self->{iv}->validate($cmd, @args); };
+		eval { $new_args2 = $self->{iv}->validate($cmd, @args); };
 		$err = $@ if $@;
  
-		@new_args = @new_args2	if @new_args2 > 0;
+		@new_args = @$new_args2	if defined($new_args2);
 	}
 
 	# Check ACLs if they're defined:

@@ -67,11 +67,14 @@ sub KHARON_IV_takes_one_hashref {
 	die "Too many args\n"	if @args > 1;
 	die "Not a hashref\n"	if ref($args[0]) ne 'HASH';
 
-	return ();
+	return undef;
 }
 
 sub takes_one_hashref {
 	my ($self, @args) = @_;
+
+	die "Something went wrong #1!"	if @args != 1;
+	die "Something went wrong #2!"	if ref($args[0]) ne 'HASH';
 
 	return @args;
 }
