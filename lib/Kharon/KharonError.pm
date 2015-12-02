@@ -9,6 +9,7 @@
 
 package Kharon::KharonError;
 use base qw(Error);
+use Error;
 use warnings;
 use strict;
 
