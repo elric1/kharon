@@ -31,6 +31,8 @@ sub new {
 		    protolist	=> \@protolist,	# list of protocols...
 		    resp	=> undef,	# Response-derived object ref
 
+		    DataTimeout	=> 300,
+
 		    NAME	=> undef,
 		    DESCR	=> undef,
 
