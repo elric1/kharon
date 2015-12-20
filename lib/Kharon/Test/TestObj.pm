@@ -79,4 +79,22 @@ sub takes_one_hashref {
 	return @args;
 }
 
+sub ping_scalar {
+	my ($self, $value) = @_;
+
+	return $value;
+}
+
+sub ping_array {
+	my ($self, @value) = @_;
+
+	return @value;
+}
+
+sub ping_hash {
+	my ($self, %value) = @_;
+
+	return %value;
+}
+
 1;

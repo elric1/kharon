@@ -14,13 +14,13 @@ use strict;
 use warnings;
 
 sub run_daemon {
-	my ($fh) = @_;
+	my ($fh, $use_perl_parsing) = @_;
 
 	dup2($fh->fileno(), 0);
 	dup2($fh->fileno(), 1);
 
 	my $obj = Kharon::Test::TestObj->new();
-	my $ahr = Kharon::Protocol::ArrayHash->new(banner => {version=>'2.0'});
+	my $ahr = make_ahr($use_perl_parsing);
 	my $pes = Kharon::Engine::Server->new(protocols => [ $ahr ]);
 	my $iv  = Kharon::InputValidation::Object->new(subobject => $obj);
 
@@ -29,22 +29,43 @@ sub run_daemon {
 
 	$pes->RunObj(
 		object => $obj,
-		cmds => [ qw/inc query exception complicated uniq encapsulate
-			     retnothing takes_one_hashref/ ]
+		cmds => [ qw/	inc
+				query
+				exception
+				complicated
+				uniq
+				encapsulate
+				ping_scalar
+				ping_array
+				ping_hash
+				retnothing
+				takes_one_hashref
+			/ ]
 	);
 	exit(0);
 }
 
+sub make_ahr {
+	my ($use_perl_parsing) = @_;
+
+	my $banner = {version=>'2.0'};
+	if ($use_perl_parsing) {
+		return Kharon::Protocol::ArrayHashPerl->new(banner => $banner);
+	} else {
+		return Kharon::Protocol::ArrayHash->new(banner => $banner);
+	}
+}
+
 sub new {
-	my ($isa, @servers) = @_;
+	my ($isa, $use_perl_parsing, @servers) = @_;
 	my $self;
 
-	my $ahr = Kharon::Protocol::ArrayHash->new(banner => {version=>'2.0'});
+	my $ahr = make_ahr($use_perl_parsing);
 	my $pec = Kharon::Engine::Client::Fork->new(protocols => [$ahr]);
 
 	my ($kid, $fh) = $pec->Connect();
 
-	run_daemon($fh) if $kid == 0;
+	run_daemon($fh, $use_perl_parsing) if $kid == 0;
 
 	$self->{pec} = $pec;
 	$self->{kid} = $kid;
@@ -52,9 +73,22 @@ sub new {
 	bless($self, $isa);
 }
 
-eval mk_scalar_methods('Kharon::Test::TestObj',
-    qw/inc query exception retnothing takes_one_hashref/);
-eval mk_array_methods('Kharon::Test::TestObj',
-    qw/complicated uniq encapsulate/);
+eval mk_scalar_methods(
+	'Kharon::Test::TestObj',
+	qw/	inc
+		query
+		exception
+		ping_scalar
+		retnothing
+		takes_one_hashref
+	/);
+eval mk_array_methods(
+	'Kharon::Test::TestObj',
+	qw/	complicated
+		uniq
+		encapsulate
+		ping_array
+		ping_hash
+	/);
 
 1;
