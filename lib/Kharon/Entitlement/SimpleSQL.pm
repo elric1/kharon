@@ -109,6 +109,15 @@ sub check1 {
 	return $ret ? 1 : undef;
 }
 
+sub require_scalar {
+	my ($usage, $argnum, $arg) = @_;
+
+	die [503, "Syntax error: arg $argnum undefined\nusage: $usage"]
+	    if !defined($arg);
+	die [503, "Syntax error: arg $argnum not a scalar\nusage: $usage"]
+	    if ref($arg) ne ''; 
+}
+
 #
 # Below are the functions to muck with the entitlements.
 
@@ -134,6 +143,9 @@ sub add {
 	my $table = $self->{table};
 	my $verbs = $self->{verbs};
 
+	require_scalar("<sacls>_add <verb> <actor>", 1, $verb);
+	require_scalar("<sacls>_add <verb> <actor>", 2, $actor);
+
 	if (defined($verbs) && !grep {$_ eq $verb} @$verbs) {
 		die "Verb ``$verb'' not valid.";
 	}
@@ -151,6 +163,9 @@ sub del {
 	my $dbh = $self->{dbh};
 	my $table = $self->{table};
 	my $del_check = $self->{del_check};
+
+	require_scalar("<sacls>_del <verb> <actor>", 1, $verb);
+	require_scalar("<sacls>_del <verb> <actor>", 2, $actor);
 
 	my $stmt = "DELETE FROM $table WHERE subject = ? AND verb = ?";
 
