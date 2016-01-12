@@ -245,8 +245,48 @@ sub generic_query {
 	return $ret;
 }
 
+sub _add_set_memb {
+	my ($dbh, $ltable, $field, $key, $val, $target, @data) = @_;
+
+	my $stmt = "INSERT INTO $ltable($key, $val) VALUES (?, ?)";
+	for my $datum (@data) {
+		eval {
+			sql_command($dbh, $stmt, $target, $datum);
+		};
+		if ($@ && $@ =~ /FOREIGN KEY/) {
+			die [504, "$field ``$datum'' doesn't exist."];
+		}
+		if ($@ && $@ =~ /UNIQUE/) {
+			# ignore re-adding set members
+			next;
+		}
+		if ($@) {
+			die $@;
+		}
+	}
+}
+
+sub _del_set_memb {
+	my ($dbh, $ltable, $field, $key, $val, $target, @data) = @_;
+	my $sth;
+
+	my $stmt = "DELETE FROM $ltable WHERE $key = ? AND $val = ?";
+
+	for my $datum (@data) {
+		eval {
+			$sth = sql_command($dbh, $stmt, $target, $datum);
+		};
+		if ($sth->rows() == 0) {
+			die [504, "$field ``$datum'' wasn't ".
+			    "configured."];
+		}
+	}
+}
+
 sub generic_modify {
 	my ($dbh, $schema, $table, $target, %args) = @_;
+	my $stmt;
+	my $sth;
 
 	my $tabledesc = $schema->{$table};
 	if (!defined($tabledesc)) {
@@ -271,10 +311,20 @@ sub generic_modify {
 		delete $args{$field};
 	}
 
+	$stmt = "SELECT COUNT($key_field) FROM $table WHERE $key_field = ?";
+	$sth = sql_command($dbh, $stmt, $target);
+	if ($sth->fetch()->[0] != 1) {
+		$dbh->rollback();
+		die [404, "$target doesn't exist."];
+	}
+
 	if (@setv) {
-		my $stmt = "UPDATE $table SET " . join(',', @setv) .
+		$stmt = "UPDATE $table SET " . join(',', @setv) .
 		    " WHERE $key_field = ?";
-		my $sth = sql_command($dbh, $stmt, @bindv, $target);
+
+		eval {
+			$sth = sql_command($dbh, $stmt, @bindv, $target);
+		};
 
 		if ($sth->rows == 0) {
 			die [504, "$key_field not found in $table"];
@@ -293,7 +343,7 @@ sub generic_modify {
 		next			if $op eq '';
 
 		if (length($op) > 4) {
-			die [503, "Can't both add/del owners and set owners"];
+			die [503, "Can't both add/del $field and set $field"];
 		}
 
 		$op = ''		if $op eq 'set_';
@@ -302,15 +352,13 @@ sub generic_modify {
 			die [503, "${op}$field takes an array ref"];
 		}
 
-		my $stmt;
 		my @data = @{$args{$op . $field}};
 
 		delete $args{$op . $field};
 
 		if ($op eq 'del_') {
-			$stmt = "DELETE FROM $ltable WHERE $key = ? AND (" .
-			    join(' OR ', map { "$val = ?" } (@data)) . ")";
-			sql_command($dbh, $stmt, $target, @data);
+			_del_set_memb($dbh, $ltable, $field, $key, $val,
+			    $target, @data);
 			next;
 		}
 
@@ -319,7 +367,7 @@ sub generic_modify {
 		# entire list if we're performing a set operation.
 
 		if ($op eq '') {
-			my $stmt = "DELETE FROM $ltable WHERE $key = ?";
+			$stmt = "DELETE FROM $ltable WHERE $key = ?";
 			sql_command($dbh, $stmt, $target);
 		}
 
@@ -328,10 +376,8 @@ sub generic_modify {
 		# a level of indentation that will make the code a little
 		# harder to read...
 
-		for my $datum (@data) {
-			$stmt = "INSERT INTO $ltable($key, $val) VALUES (?, ?)";
-			sql_command($dbh, $stmt, $target, $datum);
-		}
+		_add_set_memb($dbh, $ltable, $field, $key, $val,
+		    $target, @data);
 	}
 
 	return undef;
