@@ -278,7 +278,7 @@ sub _del_set_memb {
 		};
 		if ($sth->rows() == 0) {
 			die [504, "$field ``$datum'' wasn't ".
-			    "configured."];
+			    "present."];
 		}
 	}
 }
