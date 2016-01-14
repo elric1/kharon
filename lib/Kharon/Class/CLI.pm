@@ -5,6 +5,7 @@ use base qw(Kharon);
 
 use Kharon::utils qw/encode_var_list/;
 
+use JSON;
 use POSIX qw/strftime/;
 use Getopt::Std;		# XXXrcd: necessary?
 use Term::ReadLine;		# XXXrcd: necessary?
@@ -26,6 +27,7 @@ sub new {
 	$args{appname} = "unknown"	if !exists($args{appname});
 	$args{debug} = 0		if !exists($args{debug});
 	$args{print_success} = 0	if !exists($args{print_success});
+	$args{json} = 0			if !exists($args{json});
 
 	return bless(\%args, $class);
 }
@@ -87,6 +89,10 @@ sub run_cmd {
 	if ($@) {
 		$self->printerr($@);
 		return 1;
+	}
+
+	if ($self->{json} == 1) {
+		return $self->json_format($cmd, \@args, @ret);
 	}
 
 	$func = $self->can("FORMAT_" . $cmd);
@@ -215,6 +221,16 @@ sub hashify_args {
 	}
 
 	return (@plain, %hash);
+}
+
+sub json_format {
+	my ($self, $cmd, $args, @ret) = @_;
+	my $out = $self->{out};
+
+	print encode_json($ret[0]) . "\n"	if @ret == 1;
+	print encode_json(\@ret) . "\n"		if @ret >= 2;
+
+	return 0;
 }
 
 #
