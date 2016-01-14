@@ -182,8 +182,12 @@ sub Connect {
 		$logger->log('err', "$@") if $@;
 	}
 
-	throw Kharon::PermanentError("Cannot connect: " .
-	    join('; ', @errs), 500);
+	if (@errs == 1) {
+		my ($err) = @errs;
+		throw Kharon::PermanentError("Cannot connect: $err", 500);
+	}
+	throw Kharon::PermanentError("Cannot connect:\n\t" .
+	    join("\n\t", @errs), 500);
 }
 
 sub Disconnect {
