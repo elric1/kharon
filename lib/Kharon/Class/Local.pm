@@ -1,6 +1,6 @@
 # Blame: "Roland C. Dowdeswell" <elric@imrryr.org>
 
-package Kharon::Class::Client;
+package Kharon::Class::Local;
 use base qw(Kharon);
 
 use Kharon::Class::LC;
@@ -12,10 +12,15 @@ use warnings;
 our $AUTOLOAD;
 
 sub new {
-	my ($proto, $opts, @servers) = @_;
+	my ($proto, %args) = @_;
 	my $class = ref($proto) || $proto;
 
-	die "This is a virtual method [for now]";
+	my $self = {};
+
+	$self->{obj} = $args{obj};
+	$self->{iv}  = $args{iv};
+
+	return bless($self, $class);
 }
 
 sub DESTROY {}
@@ -37,28 +42,28 @@ sub AUTOLOAD {
 sub _runfunc {
 	my ($method, $self, @args) = @_;
 	my $class = ref($self);
+	my $obj   = $self->{obj};
+	my $iv    = $self->{iv};
 
-	my $ac = Kharon::Class::LC::is_ac_method($self, $method);
+	my $ac = Kharon::Class::LC::is_ac_method($obj, $method);
 
 	if (!defined($ac)) {
 		die "Undefined method $method called in $class";
 	}
 
-	my @ret = $self->{pec}->CommandExc($method, @args);
+	#
+	# XXXrcd: maybe we should consider implementing the refer
+	#         logic as a kind of error...
 
-	if ($ac == 1) {
-		return @ret;
+	if (defined($iv)) {
+		my $new_args2;
+
+		$new_args2 = $iv->validate($method, @args);
+
+		@args = @$new_args2 if defined($new_args2);
 	}
 
-	if (scalar(@ret) > 1) {
-		throw Kharon::PermanentError("Kharon scalar method " .
-		    "\"$method\" returned a list", 500);
-	}
-
-	return          if !defined(wantarray());
-	return ()       if @ret == 0 && wantarray();
-	return undef    if @ret == 0;
-	return $ret[0];
+	return $obj->$method(@args);
 }
 
 sub can {
@@ -74,7 +79,7 @@ __END__
 
 =head1 NAME
 
-Kharon::Class::Client - base class for Kharon clients
+Kharon::Class::Local - base class for Kharon clients operating locally
 
 =head1 SYNOPSIS
 
@@ -82,10 +87,12 @@ use base qw(Kharon::Class::Client);
 
 =head1 DESCRIPTION
 
-Kharon::Class::Client is a superclass which can be used to implement
-a Kharon client.  In normal usage, a specific client class will be
-written which inherits it.  Kharon::Class::Client expects the following
-class variables to be defined:
+Kharon::Class::Local is a separate class which can be used to
+implement a Kharon client operating locally.  The main difference
+between using this class and just directly calling the object is
+that input validation can be defined.  In normal usage, a specific
+local client class will be written which uses it.  Kharon::Class::Local
+expects the following class variables to be defined:
 
 =over 8
 

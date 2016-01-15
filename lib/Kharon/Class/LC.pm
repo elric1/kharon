@@ -1,71 +1,44 @@
 # Blame: "Roland C. Dowdeswell" <elric@imrryr.org>
+#
+# This class exists to share functionality between Kharon::Class::Client
+# and Kharon::Class::Local.
 
-package Kharon::Class::Client;
+package Kharon::Class::LC;
 use base qw(Kharon);
 
-use Kharon::Class::LC;
 use Kharon::utils qw/getclassvar/;
 
 use strict;
 use warnings;
 
-our $AUTOLOAD;
-
-sub new {
-	my ($proto, $opts, @servers) = @_;
-	my $class = ref($proto) || $proto;
-
-	die "This is a virtual method [for now]";
-}
-
-sub DESTROY {}
-
-sub AUTOLOAD {
-	my ($self, @args) = @_;
-	my $class = ref($self);
-
-	if (!defined($class)) {
-		die "Not an object...";	# XXXrcd: really shouldn't happen.
-	}
-
-	my $method = $AUTOLOAD;
-	$method =~ s/.*://o;
-
-	_runfunc($method, $self, @args);
-}
-
-sub _runfunc {
-	my ($method, $self, @args) = @_;
-	my $class = ref($self);
-
-	my $ac = Kharon::Class::LC::is_ac_method($self, $method);
-
-	if (!defined($ac)) {
-		die "Undefined method $method called in $class";
-	}
-
-	my @ret = $self->{pec}->CommandExc($method, @args);
-
-	if ($ac == 1) {
-		return @ret;
-	}
-
-	if (scalar(@ret) > 1) {
-		throw Kharon::PermanentError("Kharon scalar method " .
-		    "\"$method\" returned a list", 500);
-	}
-
-	return          if !defined(wantarray());
-	return ()       if @ret == 0 && wantarray();
-	return undef    if @ret == 0;
-	return $ret[0];
-}
-
-sub can {
+sub is_ac_method {
 	my ($self, $method) = @_;
 
-	return sub {_runfunc($method, @_)} if Kharon::Class::LC::my_can(@_);
-	return $self->SUPER::can($method);
+	my @rosccmds = getclassvar($self, "KHARON_RO_SC_EXPORT");
+	my @roaccmds = getclassvar($self, "KHARON_RO_AC_EXPORT");
+	my @rwsccmds = getclassvar($self, "KHARON_RW_SC_EXPORT");
+	my @rwaccmds = getclassvar($self, "KHARON_RW_AC_EXPORT");
+
+	my $ac;
+	$ac = 1	if grep { $_ eq $method } (@roaccmds, @rwaccmds);
+	$ac = 0 if grep { $_ eq $method } (@rosccmds, @rwsccmds);
+
+	return $ac;
+}
+
+sub my_can {
+	my ($self, $method) = @_;
+
+	my @kharon_exports = qw/KHARON_RO_SC_EXPORT KHARON_RW_SC_EXPORT
+				KHARON_RO_AC_EXPORT KHARON_RW_AC_EXPORT/;
+
+	my @cmds = map { getclassvar($self, $_) } @kharon_exports;
+
+	if (grep { $method eq $_ } @cmds) {
+		return 1;
+	}
+
+	return 0;
 }
 
 1;
@@ -74,7 +47,7 @@ __END__
 
 =head1 NAME
 
-Kharon::Class::Client - base class for Kharon clients
+Kharon::Engine::Client::Base - base class for Kharon clients
 
 =head1 SYNOPSIS
 
