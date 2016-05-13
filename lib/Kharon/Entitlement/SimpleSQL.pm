@@ -92,6 +92,8 @@ sub check1 {
 	my $dbh = $self->{dbh};
 	my $table = $self->{table};
 
+	return undef if @{$self->{credlist}} == 0;
+
 	if (@{$self->{credlist}} != 1) {
 		return "can't deal with multiple creds";
 	}
