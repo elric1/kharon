@@ -311,26 +311,7 @@ sub generic_modify {
 		delete $args{$field};
 	}
 
-	$stmt = "SELECT COUNT($key_field) FROM $table WHERE $key_field = ?";
-	$sth = sql_command($dbh, $stmt, $target);
-	if ($sth->fetch()->[0] != 1) {
-		$dbh->rollback();
-		die [404, "$target doesn't exist."];
-	}
-
-	if (@setv) {
-		$stmt = "UPDATE $table SET " . join(',', @setv) .
-		    " WHERE $key_field = ?";
-
-		eval {
-			$sth = sql_command($dbh, $stmt, @bindv, $target);
-		};
-
-		if ($sth->rows == 0) {
-			die [504, "$key_field not found in $table"];
-		}
-	}
-
+	my @list_actions;
 	for my $list_entry (@$lists) {
 		my ($ltable, $key, $val, $field) = @$list_entry;
 
@@ -352,9 +333,40 @@ sub generic_modify {
 			die [503, "${op}$field takes an array ref"];
 		}
 
-		my @data = @{$args{$op . $field}};
+		push(@list_actions, [$ltable, $key, $op, $field, $val,
+		    @{$args{$op . $field}}]);
 
 		delete $args{$op . $field};
+	}
+
+	if (@setv == 0 && @list_actions == 0) {
+		# Nothing to do, we exit early and thereby avoid
+		# throwing an error if the target doesn't exist.
+		return;
+	}
+
+	$stmt = "SELECT COUNT($key_field) FROM $table WHERE $key_field = ?";
+	$sth = sql_command($dbh, $stmt, $target);
+	if ($sth->fetch()->[0] != 1) {
+		$dbh->rollback();
+		die [404, "$target doesn't exist."];
+	}
+
+	if (@setv) {
+		$stmt = "UPDATE $table SET " . join(',', @setv) .
+		    " WHERE $key_field = ?";
+
+		eval {
+			$sth = sql_command($dbh, $stmt, @bindv, $target);
+		};
+
+		if ($sth->rows == 0) {
+			die [504, "$key_field not found in $table"];
+		}
+	}
+
+	for my $action (@list_actions) {
+		my ($ltable, $key, $op, $field, $val, @data) = @$action;
 
 		if ($op eq 'del_') {
 			_del_set_memb($dbh, $ltable, $field, $key, $val,
