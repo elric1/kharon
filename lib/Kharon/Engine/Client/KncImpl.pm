@@ -24,7 +24,7 @@ sub Connect {
 	my $sock = $self->{socket};
 	my $hr = $self->{connexion};
 
-	$self->SUPER::Connect($knc, "-N" . fileno($sock),
+	$self->SUPER::Connect($knc, "-ono-half-close", "-N" . fileno($sock),
 	    "$hr->{KncService}\@$hr->{PeerAddr}");
 }
 
