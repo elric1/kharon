@@ -325,6 +325,9 @@ encode(struct encode_state **st, char *ret, size_t len)
 {
 	size_t	 pos;
 
+	if (ST_IS_EMPTY(st))
+		return 0;
+
 	D(fprintf(stderr, "encode, enter\n"));
 	for (pos=0; pos < len;) {
 		D(fprintf(stderr, "encode, loop pos=%zu\n", pos));
