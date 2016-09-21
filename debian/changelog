@@ -1,3 +1,15 @@
+libkharon (0.6.0) unstable; urgency=low
+
+  * fix an encoder segv when passed an empty stack
+  * pass -ono-half-close to knc
+  * Implement Kharon::Class::Local
+  * Kharon::Class::CLI: add JSON output format option
+  * Kharon::dbutils::generic_modify returns more useful error messages
+  * make default DataTimeout => 300
+  * some additional minor issues
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Wed, 21 Sep 2016 23:18:59 +0000
+
 libkharon (0.5.0) unstable; urgency=low
 
   * Add a basic input validation framework (with tests).
