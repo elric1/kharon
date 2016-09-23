@@ -80,7 +80,7 @@ sub finalise_result {
 
 		for my $j (keys %{$in->{$i}}) {
 			if (ref($in->{$i}->{$j}) eq 'HASH') {
-				$new->{$j} = [keys %{$in->{$i}->{$j}}];
+				$new->{$j} = [sort (keys %{$in->{$i}->{$j}})];
 				next;
 			}
 			$new->{$j} = $in->{$i}->{$j};
