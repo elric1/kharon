@@ -9,7 +9,7 @@ X-Python-Version: 2.7
 
 Package: libkharon-perl
 Architecture: any
-Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}, liberror-perl
+Depends: ${perl:Depends}, ${shlibs:Depends}, ${misc:Depends}, liberror-perl, libjson-perl
 Description: a client/server application development framework
  a client/server application development framework
  .
