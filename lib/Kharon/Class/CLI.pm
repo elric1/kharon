@@ -245,10 +245,10 @@ sub generic_format {
 
 	for my $r (@ret) {
 		if (ref($r) eq 'HASH') {
-			for my $k (keys %$r) {
+			for my $k (sort (keys %$r)) {
 				if (ref($r->{$k}) eq 'ARRAY') {
 					$self->qout($k . ":", join(',',
-					    @{$r->{$k}}));
+					    sort @{$r->{$k}}));
 				} else {
 					$self->qout($k . ":", $r->{$k})
 					    if defined($r->{$k});
@@ -257,7 +257,7 @@ sub generic_format {
 			next;
 		}
 		if (ref($r) eq 'ARRAY') {
-			$self->generic_format($cmd, $args, @$r);
+			$self->generic_format($cmd, $args, sort @$r);
 			next;
 		}
 		if (defined($r)) {
