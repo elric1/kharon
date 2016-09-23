@@ -11,6 +11,12 @@ use Kharon::utils qw/getclassvar/;
 use strict;
 use warnings;
 
+#
+# is_{ac,rw}_method() return 1 for true, 0 for false, and undef
+# if the method isn't defined at all.  This allows these functions
+# to be use to determine if the method exists at all as well as
+# what kind of method it is.
+
 sub is_ac_method {
 	my ($self, $method) = @_;
 
@@ -22,6 +28,21 @@ sub is_ac_method {
 	my $ac;
 	$ac = 1	if grep { $_ eq $method } (@roaccmds, @rwaccmds);
 	$ac = 0 if grep { $_ eq $method } (@rosccmds, @rwsccmds);
+
+	return $ac;
+}
+
+sub is_rw_method {
+	my ($self, $method) = @_;
+
+	my @rosccmds = getclassvar($self, "KHARON_RO_SC_EXPORT");
+	my @roaccmds = getclassvar($self, "KHARON_RO_AC_EXPORT");
+	my @rwsccmds = getclassvar($self, "KHARON_RW_SC_EXPORT");
+	my @rwaccmds = getclassvar($self, "KHARON_RW_AC_EXPORT");
+
+	my $ac;
+	$ac = 1	if grep { $_ eq $method } (@rwaccmds, @rwsccmds);
+	$ac = 0 if grep { $_ eq $method } (@roaccmds, @rosccmds);
 
 	return $ac;
 }

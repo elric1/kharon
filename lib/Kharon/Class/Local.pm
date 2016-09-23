@@ -3,6 +3,8 @@
 package Kharon::Class::Local;
 use base qw(Kharon);
 
+use Sys::Hostname;
+
 use Kharon::Class::LC;
 use Kharon::utils qw/getclassvar/;
 
@@ -45,15 +47,21 @@ sub _runfunc {
 	my $obj   = $self->{obj};
 	my $iv    = $self->{iv};
 
-	my $ac = Kharon::Class::LC::is_ac_method($obj, $method);
+	my $rw = Kharon::Class::LC::is_rw_method($obj, $method);
 
-	if (!defined($ac)) {
+	if (!defined($rw)) {
 		die "Undefined method $method called in $class";
 	}
 
-	#
-	# XXXrcd: maybe we should consider implementing the refer
-	#         logic as a kind of error...
+	if ($rw) {
+		my $master;
+		eval { $master = $obj->KHARON_MASTER(); };
+
+		if (defined($master) && $master ne hostname()) {
+			die [500, "In local mode, rw commands must be issued ".
+			    "on the master: $master"];
+		}
+	}
 
 	if (defined($iv)) {
 		my $new_args2;
