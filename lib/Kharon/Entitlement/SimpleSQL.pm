@@ -154,7 +154,19 @@ sub add {
 
 	my $stmt = "INSERT INTO $table(subject, verb) VALUES (?, ?)";
 
-	sql_command($dbh, $stmt, $actor, $verb);
+	eval { sql_command($dbh, $stmt, $actor, $verb); };
+	if ($@) {
+		my $err = $@;
+
+		$dbh->rollback();
+		if ($err =~ /unique/i) {
+			die [500, "sacls already granted."];
+		}
+		if ($err =~ /FOREIGN KEY constraint failed/i) {
+			die [500, "subject \"$actor\" doesn't exist."]
+		}
+		die $err;
+	}
 
 	$dbh->commit();
 	return;
