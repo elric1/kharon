@@ -12,9 +12,6 @@ use Kharon::Test::Protocols;
 use Kharon::Test::ForkClientServer;
 
 eval {
-	Kharon::Test::ForkClientServer::run_test();
-	Kharon::Test::Protocols::run_test();
-	Kharon::Test::Entitlements::run_test();
 	Kharon::Test::ParseSpeed::run_test();
 };
 
