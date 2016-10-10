@@ -229,8 +229,8 @@ sub json_format {
 
 	my $json = JSON->new->allow_nonref;
 
-	print $json->pretty->encode($ret[0]) . "\n"	if @ret == 1;
-	print $json->pretty->encode(\@ret) . "\n"	if @ret >= 2;
+	print $json->pretty->encode($ret[0])	if @ret == 1;
+	print $json->pretty->encode(\@ret)	if @ret >= 2;
 
 	return 0;
 }
