@@ -9,6 +9,8 @@ use Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw{
 		sql_command
+		sql_exec
+		sql_exec_c
 		generic_modify
 		generic_query
 	};
@@ -17,6 +19,24 @@ use DBI;
 
 use warnings;
 use strict;
+
+sub sql_exec {
+	my ($dbh, $stmt, @values) = @_;
+	my $sth;
+
+	$sth = $dbh->prepare($stmt);
+	$sth->execute(@values);
+	return $sth;
+}
+
+sub sql_exec_c {
+	my ($dbh, $stmt, @values) = @_;
+	my $sth;
+
+	$sth = $dbh->prepare_cached($stmt, undef, 3);
+	$sth->execute(@values);
+	return $sth;
+}
 
 sub sql_command {
 	my ($dbh, $stmt, @values) = @_;
