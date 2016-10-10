@@ -48,6 +48,7 @@ sub _runfunc {
 	my $iv    = $self->{iv};
 
 	my $rw = Kharon::Class::LC::is_rw_method($obj, $method);
+	my $ac = Kharon::Class::LC::is_ac_method($obj, $method);
 
 	if (!defined($rw)) {
 		die "Undefined method $method called in $class";
@@ -63,15 +64,35 @@ sub _runfunc {
 		}
 	}
 
-	if (defined($iv)) {
-		my $new_args2;
+	my $precommand	= $obj->can("KHARON_PRECOMMAND");
+	my $postcommand	= $obj->can("KHARON_POSTCOMMAND");
 
-		$new_args2 = $iv->validate($method, @args);
+	&$precommand($obj, $method, @args)	if defined($precommand);
 
-		@args = @$new_args2 if defined($new_args2);
-	}
+	my @ret;
+	my $ret;
+	eval {
+		if (defined($iv)) {
+			my $new_args2;
 
-	return $obj->$method(@args);
+			$new_args2 = $iv->validate($method, @args);
+
+			@args = @$new_args2 if defined($new_args2);
+		}
+
+		@ret = $obj->$method(@args)	if $ac;
+		$ret = $obj->$method(@args)	if ! $ac;
+	};
+
+	my $err = $@;
+	my $code = 250;
+	   $code = 599	if $err;
+
+	&$postcommand($obj, $method, $code)	if defined($postcommand);
+
+	die $err	if $err;
+	return @ret	if $ac;
+	return $ret;
 }
 
 sub can {

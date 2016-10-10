@@ -127,14 +127,23 @@ sub do_command {
 	# response object you constructed this PES
 	# with expects...
 
+	my $f;
+	my $err;
 	my $code;
 	my $last = 0;
 	my @reflist;
 
+	# Run the pre-execution command:
+	$f = $opts->{precommand};
+	if (defined($f)) {
+		eval { &$f($cmd, @args); };
+
+		$err = $@ if $@;
+	}
+
 	# Perform input validation:
-	my $err = 0;
 	my @new_args = @args;
-	if (defined($self->{iv})) {
+	if (!defined($err) && defined($self->{iv})) {
 		my $new_args2;
 
 		eval { $new_args2 = $self->{iv}->validate($cmd, @args); };
@@ -144,7 +153,7 @@ sub do_command {
 	}
 
 	# Check ACLs if they're defined:
-	if (!$err && defined($self->{acl})) {
+	if (!defined($err) && defined($self->{acl})) {
 		my $perm;
 
 		eval { $perm = $self->{acl}->check($cmd, @new_args); };
@@ -156,18 +165,20 @@ sub do_command {
 		}
 	}
 
-	if (!$err) {
-		my $func = $handlers->{$cmd};
+	if (!defined($err)) {
+		$f = $handlers->{$cmd};
 
-		eval { ($code, $last, @reflist) = &$func($cmd, @new_args); };
+		eval { ($code, $last, @reflist) = &$f($cmd, @new_args); };
 		$err = $@ if $@;
 	}
 
-	if ($err) {
+	if (defined($err)) {
 		$code = 599;
 		$last = 0;
 		(@reflist) = ($@);
 	}
+
+	eval { &{$opts->{postcommand}}($cmd, $code); };
 
 	$log->cmd_log('info', $code, $cmd, @args);
 
@@ -324,8 +335,16 @@ sub RunObj {
 		$refercmds = {map { $_ => {PeerAddr=>$master} } @$refercmds};
 	};
 
-	$self->Run({exitcmds => $exitcmds, refercmds => $refercmds},
-	    \%handlers);
+	my $opts;
+	$opts->{exitcmds}	= $exitcmds;
+	$opts->{refercmds}	= $refercmds;
+
+	my $pre = $object->can("KHARON_PRECOMMAND");
+	my $post = $object->can("KHARON_POSTCOMMAND");
+	$opts->{precommand}  = sub { &$pre($object, @_);  } if defined($pre);
+	$opts->{postcommand} = sub { &$post($object, @_); } if defined($post);
+
+	$self->Run($opts, \%handlers);
 }
 
 sub RunKncAcceptor {
