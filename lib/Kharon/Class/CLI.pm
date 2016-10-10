@@ -227,8 +227,10 @@ sub json_format {
 	my ($self, $cmd, $args, @ret) = @_;
 	my $out = $self->{out};
 
-	print encode_json($ret[0]) . "\n"	if @ret == 1;
-	print encode_json(\@ret) . "\n"		if @ret >= 2;
+	my $json = JSON->new->allow_nonref;
+
+	print $json->pretty->encode($ret[0]) . "\n"	if @ret == 1;
+	print $json->pretty->encode(\@ret) . "\n"	if @ret >= 2;
 
 	return 0;
 }
