@@ -172,13 +172,19 @@ sub do_command {
 		$err = $@ if $@;
 	}
 
+	# Run the post-execution command:
+	$f = $opts->{postcommand};
+	if (defined($f)) {
+		eval { &$f($cmd, defined($err) ? 599 : $code); };
+
+		$err = $@	if $@;
+	}
+
 	if (defined($err)) {
 		$code = 599;
 		$last = 0;
-		(@reflist) = ($@);
+		(@reflist) = ($err);
 	}
-
-	eval { &{$opts->{postcommand}}($cmd, $code); };
 
 	$log->cmd_log('info', $code, $cmd, @args);
 
