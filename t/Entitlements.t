@@ -43,4 +43,4 @@ sub check_must {
 }
 
 run_test();
-done_testing;
+done_testing();
