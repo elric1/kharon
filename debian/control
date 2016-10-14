@@ -1,7 +1,7 @@
 Source: libkharon
 Section: unknown
 Priority: optional
-Build-Depends: debhelper (>= 7), perl, python, python2.7-dev
+Build-Depends: debhelper (>= 7), perl, libjson-perl, python, python2.7-dev
 Maintainer: elric <elric@imrryr.org>
 Standards-Version: 3.8.3
 Homepage: http://search.cpan.org/dist/Kharon/
