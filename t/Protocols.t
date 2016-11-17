@@ -71,9 +71,11 @@ sub test_protocol {
 	encode_parse($proto, undef);
 	encode_parse($proto, '');
 	encode_parse($proto, '', '', 'a');
-	encode_parse($proto, '!');
 	encode_parse($proto, join('', map { chr($_) } (0..255)));
 	encode_parse($proto, map { chr($_) } (0..255));
+	for my $i (map { chr($_) } (0..255)) {
+		encode_parse($proto, $i);
+	}
 
 	# XXXrcd: Perl parser can't deal with these:
 	if ("$class1 $class2" !~ /Perl/) {

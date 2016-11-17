@@ -49,9 +49,12 @@ typedef void *ssp_val;
 struct entry {
 	union {
 		ssp_val	ret;
-		int	code;
+		struct {
+			uint32_t code;
+			uint32_t complete;
+		} smtplike;
 	} u;
-	int		state;
+	uint32_t state;
 };
 
 

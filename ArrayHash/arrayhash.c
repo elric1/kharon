@@ -395,14 +395,28 @@ static inline int
 stack_get_code(struct stack **st)
 {
 
-	return ST_ENTRY(st).u.code;
+	return ST_ENTRY(st).u.smtplike.code;
 }
 
 static inline void
 stack_set_code(struct stack **st, int code)
 {
 
-	ST_ENTRY(st).u.code = code;
+	ST_ENTRY(st).u.smtplike.code = code;
+}
+
+static inline int
+stack_get_complete(struct stack **st)
+{
+
+	return ST_ENTRY(st).u.smtplike.complete;
+}
+
+static inline void
+stack_set_complete(struct stack **st, int complete)
+{
+
+	ST_ENTRY(st).u.smtplike.complete = complete;
 }
 
 static inline ssp_val *
@@ -590,9 +604,22 @@ state_smtplike(struct self *self, int c)
 
 	code = stack_get_code(st);
 
-	D(fprintf(stderr, "state_smtplike code=%d got '%c'\n", code, c));
+	D(fprintf(stderr, "state_smtplike code=%d done=%d got '%c'\n",
+	    code, self->done, c));
 
-	if (code < 1000 && c >= '0' && c <= '9') {
+	if (c == SPACE) {
+		if (code < 100)
+			self->done = BAD;
+		return;
+	}
+
+	if (stack_get_complete(st)) {
+		self->p.remnant = c;
+		pop(st);
+		return;
+	}
+
+	if (c >= '0' && c <= '9') {
 		code *= 10;
 		code += c - '0';
 
@@ -606,42 +633,21 @@ state_smtplike(struct self *self, int c)
 	}
 
 	switch (c) {
-	case SPACE:
-		if (code < 100) {
-			self->done = BAD;
-			return;
-		}
-
-		break;
-
 	case '.':
-		if (code < 1000)
-			self->done = 1;
+		self->done = 1;
 		self->code = code;
 		/*FALLTHROUGH*/
 
 	case '-':
+		stack_set_complete(st, 1);
 		if (code < 100) {
 			self->done = BAD;
 			return;
 		}
-
-		if (code < 1000) {
-			code += 1000;
-			stack_set_code(st, code);
-			break;
-		}
-		/*FALLTHROUGH*/
-
+		return;
 	default:
-		if (code < 1100) {
-			self->done = BAD;
-			return;
-		}
-		self->p.remnant = c;
-		/* XXXrcd: should we check if lines have matching codes? */
-		pop(st);
-		break;
+		self->done = BAD;
+		return;
 	}
 }
 
