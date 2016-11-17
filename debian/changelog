@@ -1,3 +1,9 @@
+libkharon (0.7.1) unstable; urgency=low
+
+  * Parsing error: empty smtplike splist caused return value to be lost
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Wed, 16 Nov 2016 3:14:15 +0000
+
 libkharon (0.7.0) unstable; urgency=low
 
   * implement pre/post command framework for exported objects
