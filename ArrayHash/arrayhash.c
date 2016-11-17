@@ -617,6 +617,7 @@ state_smtplike(struct self *self, int c)
 	case '.':
 		if (code < 1000)
 			self->done = 1;
+		self->code = code;
 		/*FALLTHROUGH*/
 
 	case '-':
@@ -638,7 +639,6 @@ state_smtplike(struct self *self, int c)
 			return;
 		}
 		self->p.remnant = c;
-		self->code = code - 1000;
 		/* XXXrcd: should we check if lines have matching codes? */
 		pop(st);
 		break;

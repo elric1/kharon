@@ -1,6 +1,7 @@
 #
 #
 
+use Data::Dumper;
 use Test::More;
 
 use Kharon::Protocol::ArrayHash;
@@ -29,9 +30,7 @@ sub encode_parse {
 
 	ok(!$@, "encode_parse: $@");
 
-#	compare(\@vars, \@result);
-# the above line is correct: XXXrcd
-	is_deeply(\@vars, @result);
+	is_deeply([$code, @result], [250, \@vars]);
 }
 
 sub marshalling {
