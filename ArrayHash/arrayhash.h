@@ -4,6 +4,7 @@
 #define KHARON_ARRAYHASH_INCLUDE
 
 #include <stddef.h>
+#include <stdint.h>
 
 // #define DEBUG 1
 #if DEBUG
