@@ -134,33 +134,40 @@ sub generic_query {
 		push(@join, "LEFT JOIN $ltable ON " .
 		    "$table.$key_field = $ltable.$kfield");
 
+		my $v = delete $query{$vfield};
+
 		if (defined($as)) {
 			$fields{"$ltable.$vfield AS $as"} = 1;
+			if (defined($query{$as})) {
+				if (defined($v)) {
+					die [500, "Can't specify $vfield " .
+					    "and $as"];
+				}
+				$v = delete $query{$as};
+			}
 		} else {
 			$fields{"$ltable.$vfield"} = 1;
 		}
 
-		if (exists($query{$vfield})) {
-			my $v = $query{$vfield};
-			if (ref($v) eq 'ARRAY') {
-				my @tmpwhere;
+		next if !defined($v);
 
-				for my $i (@$v) {
-					push(@tmpwhere, "$ltable.$vfield = ?");
-					push(@bindv, $i);
-				}
+		if (ref($v) ne 'ARRAY') {
+			push(@where, "$ltable.$vfield = ?");
+			push(@bindv, $v);
+			next;
+		}
 
-				if (@$v) {
-					push(@where, '(' .
-					    join(' OR ', @tmpwhere) .
-					    ')');
-				}
-			} else {
-				push(@where, "$ltable.$vfield = ?");
-				push(@bindv, $v);
-			}
+		my @tmpwhere;
 
-			delete $query{$vfield};
+		for my $i (@$v) {
+			push(@tmpwhere, "$ltable.$vfield = ?");
+			push(@bindv, $i);
+		}
+
+		if (@$v) {
+			push(@where, '(' .
+			    join(' OR ', @tmpwhere) .
+			    ')');
 		}
 	}
 
