@@ -1,3 +1,10 @@
+libkharon (0.8) unstable; urgency=low
+
+  * Call KHARON_DISCONNECT after a connexion closes.
+  * Fix generic_query() to deal with fourth meta-schema item.
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Fri, 12 Nov 2017 7:14:15 +0000
+
 libkharon (0.7.2) unstable; urgency=low
 
   * Simplify parsing and fix another error introduced in 0.7.1.
