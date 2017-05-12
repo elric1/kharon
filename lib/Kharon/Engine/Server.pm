@@ -303,7 +303,8 @@ sub RunObj {
 	my @rocmds = (@rosccmds, @roaccmds);
 	my @rwcmds = (@rwsccmds, @rwaccmds);
 
-	my $masterfunc = $object->can("KHARON_MASTER");
+	my $masterfunc	= $object->can("KHARON_MASTER");
+	my $dtor	= $object->can("KHARON_DISCONNECT");
 
 	my $cmds      = $args{cmds};
 	my $refercmds = $args{refercmds};
@@ -319,6 +320,8 @@ sub RunObj {
 					    hostname() eq $master;
 	$refercmds = [@rwcmds]		if !defined($refercmds) &&
 					    defined($master);
+
+	$handlers{DESTROY} = sub { shift; (250, 0, &$dtor($object, @_)); };
 
 	for $cmd (@$cmds) {
 		my $code = $object->can($cmd);
