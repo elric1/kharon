@@ -321,7 +321,12 @@ sub RunObj {
 	$refercmds = [@rwcmds]		if !defined($refercmds) &&
 					    defined($master);
 
-	$handlers{DESTROY} = sub { shift; (250, 0, &$dtor($object, @_)); };
+	if (defined($dtor)) {
+		$handlers{DESTROY} = sub {
+			shift;
+			(250, 0, &$dtor($object, @_));
+		};
+	}
 
 	for $cmd (@$cmds) {
 		my $code = $object->can($cmd);
