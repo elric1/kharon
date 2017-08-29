@@ -38,6 +38,29 @@ sub log {
 	$self->output_log($level, $self->construct_log(@args));
 }
 
+sub metrics_log {
+	my ($self, %metrics) = @_;
+	my @keys = qw/precmd iv acls cmd postcmd total/;
+	@keys = grep { exists($metrics{$_}) } @keys;
+
+	my $msg = "metrics|";
+
+	#
+	# As we want the list to appear in a predictable order, we
+	# shall commit the horrifying hackery of hand-constructing
+	# a Kharon::Protocol::ArrayHash protocol object rather than
+	# using our abstraction.
+
+	my @t = map { sprintf("%s=%.6f", $_, delete($metrics{$_})) } @keys;
+
+	if (%metrics) {
+		die "metrics_log doesn't understand " .
+		    join(',', keys %metrics);
+	}
+
+	$self->log('info', $msg . '{' . join(',', @t) . '}');
+}
+
 sub cmd_log {
 	my ($self, $level, $code, $cmd, @args) = @_;
 

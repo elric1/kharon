@@ -8,6 +8,7 @@ package Kharon::Engine::Server;
 use base qw/Kharon::Engine::Std/;
 
 use Sys::Hostname;
+use Time::HiRes qw( gettimeofday tv_interval );
 
 use Kharon::utils qw/getclassvar/;
 
@@ -82,6 +83,8 @@ sub do_command {
 	my ($cmd, @args);
 	my $log = $self->{logger};
 	my $resp = $self->{resp};
+	my %metrics;
+	my $begin_time = [gettimeofday()];
 
 	# Get the command and args
 	eval {
@@ -104,6 +107,7 @@ sub do_command {
 	if (exists($opts->{exitcmds}) &&
 	    grep { $cmd eq $_ } @{$opts->{exitcmds}}) {
 		eval { $self->Write($resp->Encode(220, 'bye')); };
+		$log->cmd_log('info', 220, $cmd);
 		return 1;
 	}
 
@@ -111,6 +115,7 @@ sub do_command {
 	my $refercmds = $opts->{refercmds};
 	if (defined($refercmds) && exists($refercmds->{$cmd})) {
 		eval { $self->Write($resp->Encode(301, $refercmds->{$cmd})) };
+		$log->cmd_log('info', 301, $cmd);
 		return 0;
 	}
 
@@ -136,9 +141,11 @@ sub do_command {
 	# Run the pre-execution command:
 	$f = $opts->{precommand};
 	if (defined($f)) {
+		my $t = [gettimeofday()];
 		eval { &$f($cmd, @args); };
 
 		$err = $@ if $@;
+		$metrics{precmd} = tv_interval($t);
 	}
 
 	# Perform input validation:
@@ -146,8 +153,10 @@ sub do_command {
 	if (!defined($err) && defined($self->{iv})) {
 		my $new_args2;
 
+		my $t = [gettimeofday()];
 		eval { $new_args2 = $self->{iv}->validate($cmd, @args); };
 		$err = $@ if $@;
+		$metrics{iv} = tv_interval($t);
  
 		@new_args = @$new_args2	if defined($new_args2);
 	}
@@ -156,8 +165,10 @@ sub do_command {
 	if (!defined($err) && defined($self->{acl})) {
 		my $perm;
 
+		my $t = [gettimeofday()];
 		eval { $perm = $self->{acl}->check($cmd, @new_args); };
 		$err = $@ if $@;
+		$metrics{acls} = tv_interval($t);
  
 		if (!$err && $perm != 1) {
 			throw Kharon::PermanentError("ACL object must be " .
@@ -168,14 +179,18 @@ sub do_command {
 	if (!defined($err)) {
 		$f = $handlers->{$cmd};
 
+		my $t = [gettimeofday()];
 		eval { ($code, $last, @reflist) = &$f($cmd, @new_args); };
 		$err = $@ if $@;
+		$metrics{cmd} = tv_interval($t);
 	}
 
 	# Run the post-execution command:
 	$f = $opts->{postcommand};
 	if (defined($f)) {
+		my $t = [gettimeofday()];
 		eval { &$f($cmd, defined($err) ? 599 : $code); };
+		$metrics{postcmd} = tv_interval($t);
 
 		$err = $@	if $@;
 	}
@@ -186,6 +201,9 @@ sub do_command {
 		(@reflist) = ($err);
 	}
 
+	$metrics{total} = tv_interval($begin_time);
+
+	$log->metrics_log(%metrics);
 	$log->cmd_log('info', $code, $cmd, @args);
 
 	# XXXrcd: keep this in?
