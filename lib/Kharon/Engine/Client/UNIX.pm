@@ -34,8 +34,7 @@ sub Connect {
 			}
 			$errmsg .= ", " if $errmsg && $@;
 			$errmsg .= $@ if $@;
-			push(@errs, "connect to " . $hr .
-			    " failed: $errmsg");
+			push(@errs, "connect to $hr failed: $errmsg");
 			next;
 		}
 
@@ -51,7 +50,7 @@ sub Connect {
 		undef $self->{in};
 		undef $self->{out};
 		undef $self->{connexion};
-		$logger->log('err', "$@") if $@;
+		push(@errs, "connect to $hr failed: $@") if $@;
 	}
 
 	throw Kharon::PermanentError("Cannot connect: " .

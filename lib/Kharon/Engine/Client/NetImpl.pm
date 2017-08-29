@@ -174,12 +174,13 @@ sub Connect {
 		eval {
 			$ret = $self->NEXT::Connect();
 		};
+		my $err = $@;
 		$self->{DataTimeout} = $DataTimeout;
 		return $ret if ($ret == 1);
 
 		undef $self->{socket};
 		undef $self->{connexion};
-		$logger->log('err', "$@") if $@;
+		push(@errs, "connect to " . fmtsrv($hr) . " failed: $@") if $@;
 	}
 
 	if (@errs == 1) {
