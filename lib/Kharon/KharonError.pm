@@ -17,7 +17,7 @@ sub new {
 	(my $proto, my $text, my $code) = @_;
 
 	my $class = ref($proto) || $proto;
-	my $self = $class->SUPER::new(-text => "$text\n", @_);
+	my $self = $class->SUPER::new(-text => "$text\n");
 
 	$self->{CODE} = $code;		# Protocol return code
 
