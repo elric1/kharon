@@ -3,6 +3,7 @@ package Kharon::Test::ParseSpeed;
 use Time::HiRes qw(gettimeofday tv_interval);
 
 use Kharon::Protocol::ArrayHash;
+use Kharon::Protocol::ArrayHashPerl;
 
 sub test_it_internal {
 	my ($ahp, @strings) = @_;
