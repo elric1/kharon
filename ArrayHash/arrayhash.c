@@ -44,29 +44,22 @@ struct enc_entry {
 
 ST_DECLARE(struct encode_state, struct enc_entry);
 
-struct encode_state *marshall_init(void *);
-struct encode_state *encode_init(void *, int);
-int encode(struct encode_state **, char *, size_t);
-void encode_free(struct encode_state **);
-int parse_append(struct self *, const char *, size_t);
-void parse_reset(struct self *);
-int unmarshall(struct self *, const char *, size_t);
-
-void encode_push(struct encode_state **, int, void *);
-void encode_push_c(struct encode_state **, int, char);
-void encode_pop(struct encode_state **);
-void encode_undef(struct encode_state **, char *, size_t *, size_t);
-void encode_list(struct encode_state **, char *, size_t *, size_t);
-void encode_map(struct encode_state **, char *, size_t *, size_t);
-void encode_char(struct encode_state **, char *, size_t *, size_t);
-void encode_var(struct encode_state **, char *, size_t *, size_t);
-void encode_scalar(struct encode_state **, char *, size_t *, size_t);
+/* XXXrcd: inline these? At least static, 'em. */
+static void encode_push(struct encode_state **, int, void *);
+static void encode_push_c(struct encode_state **, int, char);
+static void encode_pop(struct encode_state **);
+static void encode_undef(struct encode_state **, char *, size_t *, size_t);
+static void encode_list(struct encode_state **, char *, size_t *, size_t);
+static void encode_map(struct encode_state **, char *, size_t *, size_t);
+static void encode_char(struct encode_state **, char *, size_t *, size_t);
+static void encode_var(struct encode_state **, char *, size_t *, size_t);
+static void encode_scalar(struct encode_state **, char *, size_t *, size_t);
 
 int parse(struct self *);
 void state_done(struct parse *, struct stack **, int);
 const char * char_from(int);
 
-void
+static void
 encode_push(struct encode_state **st, int state, void *data)
 {
 
@@ -78,7 +71,7 @@ encode_push(struct encode_state **st, int state, void *data)
 	ST_ENTRY(st).u.data = data;
 }
 
-void
+static void
 encode_push_c(struct encode_state **st, int state, char c)
 {
 
@@ -90,7 +83,7 @@ encode_push_c(struct encode_state **st, int state, char c)
 	ST_ENTRY(st).u.c    = c;
 }
 
-void
+static void
 encode_pop(struct encode_state **st)
 {
 
@@ -98,7 +91,7 @@ encode_pop(struct encode_state **st)
 	ST_POP(st);
 }
 
-void
+static void
 encode_undef(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
@@ -107,7 +100,7 @@ encode_undef(struct encode_state **st, char *ret, size_t *pos, size_t len)
 	encode_pop(st);
 }
 
-void
+static void
 encode_list(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	void	*tmp;
@@ -155,7 +148,7 @@ encode_list(struct encode_state **st, char *ret, size_t *pos, size_t len)
 	encode_push(st, STATE_VAR | ctx|CTX_RIGHTBRACKET, tmp);
 }
 
-void
+static void
 encode_map(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	void	*key;
@@ -183,7 +176,7 @@ encode_map(struct encode_state **st, char *ret, size_t *pos, size_t len)
 
 }
 
-void
+static void
 encode_char(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
@@ -192,7 +185,7 @@ encode_char(struct encode_state **st, char *ret, size_t *pos, size_t len)
 	encode_pop(st);
 }
 
-void
+static void
 encode_var(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 
@@ -201,7 +194,7 @@ encode_var(struct encode_state **st, char *ret, size_t *pos, size_t len)
 	ST_ENTRY(st).state |= encode_get_type(ST_ENTRY(st).u.data);
 }
 
-void
+static void
 encode_scalar(struct encode_state **st, char *ret, size_t *pos, size_t len)
 {
 	unsigned char	*str;

@@ -245,3 +245,5 @@ map_end(ssp_val *ret)
 	*ret = newRV_noinc(*ret);
 	D(fprintf(stderr, "%p\n", *ret));
 }
+
+#include "arrayhash.c"

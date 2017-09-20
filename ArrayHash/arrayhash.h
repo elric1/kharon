@@ -134,9 +134,15 @@ struct self {
 #define CRLF		(-'\n')
 
 struct self	*parse_init(void);
+int		 parse_append(struct self *, const char *, size_t);
+void		 parse_reset(struct self *);
 void		 parse_free(struct self *self);
 
-struct encode_state	*encode_init(void *, int);
 struct encode_state	*marshall_init(void *);
+int			 unmarshall(struct self *, const char *, size_t);
+
+struct encode_state	*encode_init(void *, int);
 int			 encode(struct encode_state **, char *, size_t);
+void			 encode_free(struct encode_state **);
+
 #endif
