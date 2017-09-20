@@ -1,6 +1,7 @@
+*.o
+
 ArrayHash/ArrayHash.bs
 ArrayHash/ArrayHash.c
-ArrayHash/ArrayHash.o
 ArrayHash/MYMETA.json
 ArrayHash/MYMETA.yml
 ArrayHash/Makefile
