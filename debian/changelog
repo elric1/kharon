@@ -1,3 +1,9 @@
+libkharon (0.8.1) unstable; urgency=low
+
+  * python binding: increase MAX_ENCODED and fix strings to allow nul.
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Mon, 18 Dec 2017 7:14:15 +0000
+
 libkharon (0.8) unstable; urgency=low
 
   * Call KHARON_DISCONNECT after a connexion closes.
