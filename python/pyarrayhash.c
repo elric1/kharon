@@ -9,7 +9,7 @@
 void		pyarrayhash_delete(PyObject *);
 PyMODINIT_FUNC	initpyarrayhash(void);
 
-#define MAX_ENCODED 16384
+#define MAX_ENCODED (256 * 1024)
 
 void
 pyarrayhash_delete(PyObject *parser)

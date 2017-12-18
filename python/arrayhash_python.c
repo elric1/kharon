@@ -63,7 +63,7 @@ encode_get_scalar(void *data, size_t *len)
 			*len = 0;
 			return NULL;
 		}
-		*len = strlen(ret);
+		*len = PyString_Size(s);
 	} else {
 		ret = NULL;
 		*len = 0;
