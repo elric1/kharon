@@ -174,6 +174,19 @@ sub do_command {
 			throw Kharon::PermanentError("ACL object must be " .
 			    "defined to throw exceptions", 500);
 		}
+
+		#
+		# We shall redirect to the master on authz failures because
+		# the master may very well be more up to date.
+
+		if (defined($refercmds) && exists($refercmds->{$cmd})) {
+			eval {
+				$self->Write($resp->Encode(301,
+				    $refercmds->{$cmd}))
+			};
+			$log->cmd_log('info', 301, $cmd);
+			return 0;
+		}
 	}
 
 	if (!defined($err)) {
