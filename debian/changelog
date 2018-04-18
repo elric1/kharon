@@ -1,3 +1,11 @@
+libkharon (0.8.2) unstable; urgency=low
+
+  * Bug: the client outputs transient errors sometimes during failover
+  * provide authorisation code for *_{subject,group}
+  * log timing metrics
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Wed, 18 Apr 2018 7:14:15 +0000
+
 libkharon (0.8.1) unstable; urgency=low
 
   * python binding: increase MAX_ENCODED and fix strings to allow nul.
