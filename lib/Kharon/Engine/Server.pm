@@ -175,8 +175,16 @@ sub do_command {
 			    "defined to throw exceptions", 500);
 		}
 
-		$code = 301;
-		@reflist = ($refercmds->{$cmd});
+		#
+		# We shall redirect to the master on authz failures because
+		# the master may very well be more up to date.
+
+		my $aclrefer = $opts->{aclrefer};
+		if (defined($aclrefer) && exists($aclrefer->{$cmd})) {
+			$code = 301;
+			$last = 0;
+			@reflist = ($aclrefer->{$cmd});
+		}
 	}
 
 	if (!defined($err)) {
@@ -198,7 +206,7 @@ sub do_command {
 		$err = $@	if $@;
 	}
 
-	if (defined($err)) {
+	if (defined($err) && (!defined($code) || $code < 300)) {
 		$code = 599;
 		$last = 0;
 		(@reflist) = ($err);
@@ -327,6 +335,7 @@ sub RunObj {
 	my $masterfunc	= $object->can("KHARON_MASTER");
 	my $dtor	= $object->can("KHARON_DISCONNECT");
 
+	my $aclrefer  = $args{aclrefer};
 	my $cmds      = $args{cmds};
 	my $refercmds = $args{refercmds};
 	my $exitcmds  = $args{exitcmds};
@@ -340,6 +349,8 @@ sub RunObj {
 	undef $master			if  defined($master) &&
 					    hostname() eq $master;
 	$refercmds = [@rwcmds]		if !defined($refercmds) &&
+					    defined($master);
+	$aclrefer = [@rocmds]		if !defined($aclrefer) &&
 					    defined($master);
 
 	if (defined($dtor)) {
@@ -370,7 +381,14 @@ sub RunObj {
 		$refercmds = {map { $_ => {PeerAddr=>$master} } @$refercmds};
 	};
 
+	if (ref($aclrefer) eq 'ARRAY') {
+		die "RunObj: next_server not defined" if !defined($master);
+
+		$aclrefer = {map { $_ => {PeerAddr=>$master} } @$aclrefer};
+	};
+
 	my $opts;
+	$opts->{aclrefer}	= $aclrefer;
 	$opts->{exitcmds}	= $exitcmds;
 	$opts->{refercmds}	= $refercmds;
 
