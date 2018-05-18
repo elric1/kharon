@@ -280,10 +280,10 @@ sub _add_set_memb {
 		eval {
 			sql_command($dbh, $stmt, $target, $datum);
 		};
-		if ($@ && $@ =~ /FOREIGN KEY/) {
+		if ($@ && $@ =~ /FOREIGN KEY/io) {
 			die [504, "$field ``$datum'' doesn't exist."];
 		}
-		if ($@ && $@ =~ /UNIQUE/) {
+		if ($@ && $@ =~ /UNIQUE/io) {
 			# ignore re-adding set members
 			next;
 		}
