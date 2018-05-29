@@ -44,7 +44,16 @@ sub _runfunc {
 		die "Undefined method $method called in $class";
 	}
 
-	my @ret = $self->{pec}->CommandExc($method, @args);
+	my @ret;
+	eval { @ret = $self->{pec}->CommandExc($method, @args); };
+
+	if (my $err = $@) {
+		if ($self->can("KHARON_ENCAPSULATE_ERROR")) {
+			$self->KHARON_ENCAPSULATE_ERROR($err);
+		}
+
+		die $err;
+	}
 
 	if ($ac == 1) {
 		return @ret;
@@ -66,6 +75,26 @@ sub can {
 
 	return sub {_runfunc($method, @_)} if Kharon::Class::LC::my_can(@_);
 	return $self->SUPER::can($method);
+}
+
+sub KHARON_DEFAULT_ENCAPSULATE_ERROR {
+	my ($self, $err) = @_;
+	my $id = $self->KHARON_PEER();
+
+	die $err				if !defined($id);
+	die [$err->[0], "$id said: $err->[1]"]	if  ref($err) eq 'ARRAY'	&&
+						    scalar(@$err) == 2		&&
+						    ref($err->[0]) eq ''	&&
+						    ref($err->[1]) eq '';
+	die "$id said: $err"			if ref($err) eq '';
+	die $err;
+}
+
+sub KHARON_PEER {
+	my ($self) = @_;
+	my $hr = $self->{pec}->{connexion};
+
+	return $self->{pec}->{connexion}->{PeerAddr};
 }
 
 1;
