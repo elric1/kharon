@@ -6,9 +6,12 @@
 
 package Kharon::Engine::Client::NetImpl;
 
+use Data::Dumper;
+
 use NEXT;
 use IO::Socket;
 use Fcntl;
+use Time::HiRes qw(sleep);
 
 use Kharon::TransientError qw(:try);
 use Kharon::PermanentError qw(:try);
@@ -123,19 +126,62 @@ sub Connect {
 	my $self = shift;
 	my $logger = $self->{logger};
 
+	die ref($self) . "::Connect requires servers to be passed in.\n" if @_ == 0;
+
 	my $def = $self->{ServerDefaults};
 	my ($ConnectTimeout, $DataTimeout);
 	my @errs;
 
+	my @hrs;
 	foreach my $hr (@_) {
 		if (defined($hr) && ref($hr) eq '') {
 			$hr = string_to_server($def, $hr);
 		}
 
+		push(@hrs, $hr);
+	}
+
+	#
+	# To ensure that we have enough retries, we expand our original
+	# list to contain at least 12 entries by duplicating it.  We add
+	# to the host ref the concept of a "wait time" which we set on
+	# the first entry each time we begin another duplication.  We use
+	# the "wait time" to implement an exponential backoff with a slight
+	# random peturbation.  We limit the number of cycles to the length
+	# of the list @waits.
+	#
+	# The main benefit of these retries are our attempts to contact the
+	# master after a referral as that list has only a single element in
+	# it.
+
+	my $hrcur = 0;
+	my $hrmax = @hrs;
+	my $wait = 1;
+	my @waits = (1, 2, 4);
+	while (@hrs < 12) {
+		my $hr = { %{$hrs[$hrcur++]} };
+
+		if ($hrcur == 1) {
+			$hr->{WaitTime} = shift(@waits) + rand(1);
+		}
+
+		if ($hrcur >= $hrmax) {
+			$hrcur = 0;
+		}
+
+		push(@hrs, $hr);
+		last if @waits == 0;
+	}
+
+	foreach my $hr (@hrs) {
 		$ConnectTimeout= firstkey('ConnectTimeout', $hr, $def,  5);
 		$DataTimeout   = firstkey('DataTimeout',    $hr, $def, 60);
 
 		validate_server('Connect', $hr);
+
+		if ($hr->{WaitTime}) {
+			sleep($hr->{WaitTime});
+		}
 
 		$logger->log('debug',
 		    "connect attempt $hr->{PeerAddr}:$hr->{PeerPort}");
