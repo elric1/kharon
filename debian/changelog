@@ -1,3 +1,12 @@
+libkharon (0.8.3) unstable; urgency=low
+
+  * Kharon::Engine::Client::NetImpl: more failover with backoff
+  * Kharon::Class::Client: provide mechanism to decorate errors
+  * Quick ArrayHash/Makefile.PL fix for older Perls
+  * Kharon::dbutils: make DB errors case insensitive
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Mon, 18 Jun 2018 7:14:15 +0000
+
 libkharon (0.8.2) unstable; urgency=low
 
   * Bug: the client outputs transient errors sometimes during failover
