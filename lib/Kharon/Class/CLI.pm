@@ -6,7 +6,7 @@ use base qw(Kharon);
 use Kharon::utils qw/encode_var_list/;
 
 use JSON;
-use POSIX qw/strftime/;
+use POSIX qw/isatty strftime/;
 use Getopt::Std;		# XXXrcd: necessary?
 use Term::ReadLine;		# XXXrcd: necessary?
 
@@ -113,18 +113,29 @@ sub run_cmd {
 	return 0;
 }
 
+sub read_term_or_stdin {
+	my ($term, $prompt) = @_;
+
+	return $term->readline($prompt)		if defined($term);
+	return <STDIN>;
+}
+
 sub run_cmdline {
 	my ($self) = @_;
+	my $term;
 
 	my $name  = $self->{appname};
 	my $debug = $self->{debug};
 
-	my $term = Term::ReadLine->new("$name client");
-	$self->set_out($term->OUT || \*STDOUT);
-	$term->ornaments(0);
+	$self->set_out(\*STDOUT);
+	if (isatty(*STDIN)) {
+		$term = Term::ReadLine->new("$name client");
+		$self->set_out($term->OUT || \*STDOUT);
+		$term->ornaments(0);
+	}
 
 	while (1) {
-		my $cmd = $term->readline("$name> ");
+		my $cmd = read_term_or_stdin($term, "$name> ");
 		last if !defined($cmd);
 
 		if ($debug) {
