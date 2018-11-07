@@ -1,3 +1,9 @@
+libkharon (0.8.4) unstable; urgency=low
+
+  * Kharon::Class::CLI: don't use readline if STDIN isn't a tty
+
+ -- Roland C. Dowdeswell <roland.dowdeswell@twosigma.com>  Mon, 7 Nov 2018 7:14:15 +0000
+
 libkharon (0.8.3) unstable; urgency=low
 
   * Kharon::Engine::Client::NetImpl: more failover with backoff
