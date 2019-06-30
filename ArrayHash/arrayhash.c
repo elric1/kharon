@@ -490,6 +490,7 @@ push(struct stack **st)
 	D(fprintf(stderr, "pushing...\n"));
 	ST_PUSH(st);
 	ST_ENTRY(st).state = 0;
+	stack_set_complete(st, 0);
 	stack_set_ssp_val(st, NULL);
 }
 
