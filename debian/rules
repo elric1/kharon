@@ -1,12 +1,9 @@
 #!/usr/bin/make -f
 
 %:
-	dh "$@" --with-python2
+	dh "$@"
 
-override_dh_auto_build: build-python2.7
-	dh_auto_build
-
-override_dh_auto_install: install-python2.7
+override_dh_auto_install:
 	set -e; PERLLIB=$(shell perl -MConfig -le 'print $$Config{installvendorarch};'); \
 	for file in libkharon-perl.install; \
 	do \
@@ -14,10 +11,3 @@ override_dh_auto_install: install-python2.7
 			debian/$${file}.in > debian/$$file; \
 	done
 	dh_auto_install
-
-build-python%:
-	cd python && python$* setup.py build
-
-install-python%:
-	cd python && python$* setup.py install --root=${CURDIR}/debian/tmp \
-					       --install-layout=deb
