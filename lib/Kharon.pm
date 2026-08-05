@@ -2,7 +2,7 @@ package Kharon;
 
 use version;
 
-our $VERSION = version->new("v0.4");
+our $VERSION = version->new("v0.8.4");
 
 use warnings;
 use strict;
@@ -31,7 +31,7 @@ Kharon - a client/server application development framework
 
 =head1 VERSION
 
-Version 0.01
+Version 0.8.4
 
 =cut
 

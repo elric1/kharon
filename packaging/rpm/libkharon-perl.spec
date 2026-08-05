@@ -36,6 +36,9 @@ find %{buildroot} \( -type f -o -type l \) \
     ! -path "%{buildroot}%{_mandir}/*" \
     | sed 's#^%{buildroot}##' > libkharon-perl.files
 
+%check
+make test
+
 %files -f libkharon-perl.files
 %license debian/copyright
 %doc Changes README

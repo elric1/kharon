@@ -1,0 +1,85 @@
+name: Release packages
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  debian:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Build Debian package
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          package_version=$(dpkg-parsechangelog -S Version)
+          test "${RELEASE_TAG#v}" = "${package_version%%-*}"
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential debhelper liberror-perl libjson-perl
+          dpkg-buildpackage -us -uc -b
+          mkdir dist
+          cp ../*.deb dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debian-packages
+          path: dist/*.deb
+          if-no-files-found: error
+
+  rpm:
+    runs-on: ubuntu-latest
+    container: rockylinux:9
+    steps:
+      - name: Install build dependencies
+        run: >-
+          dnf install -y gcc git gzip make perl perl-devel
+          perl-Error perl-ExtUtils-MakeMaker perl-generators perl-JSON
+          rpm-build
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Build RPM packages
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          topdir="$HOME/rpmbuild"
+          spec=packaging/rpm/libkharon-perl.spec
+          version=$(rpm -q --specfile "$spec" --qf '%{version}\n' | head -1)
+          test "${RELEASE_TAG#v}" = "$version"
+          mkdir -p "$topdir"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          git archive --format=tar --prefix="kharon-$version/" HEAD |
+            gzip -n >"$topdir/SOURCES/kharon-$version.tar.gz"
+          cp "$spec" "$topdir/SPECS/"
+          rpmbuild -ba "$topdir/SPECS/libkharon-perl.spec"
+          mkdir dist
+          find "$topdir/RPMS" "$topdir/SRPMS" -type f -name '*.rpm' \
+            -exec cp {} dist/ \;
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm-packages
+          path: dist/*.rpm
+          if-no-files-found: error
+
+  publish:
+    needs: [debian, rpm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" dist/* --clobber
